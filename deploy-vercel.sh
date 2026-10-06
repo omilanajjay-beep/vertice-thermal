@@ -22,9 +22,13 @@ if [[ -n "${VERCEL_TOKEN:-}" ]]; then
   say "Using Vercel token from the VERCEL_TOKEN environment variable."
 else
   AUTH_ARGS=()
-  say "No VERCEL_TOKEN supplied; starting interactive Vercel login."
-  # This opens the standard Vercel email/device login flow. It is not a GitHub flow.
-  $VERCEL_BIN login
+  if $VERCEL_BIN whoami >/dev/null 2>&1; then
+    say "Using the existing authenticated Vercel CLI session."
+  else
+    say "No VERCEL_TOKEN supplied; starting interactive Vercel login."
+    # This opens the standard Vercel email/device login flow. It is not a GitHub flow.
+    $VERCEL_BIN login
+  fi
 fi
 
 SCOPE_ARGS=()
@@ -47,6 +51,10 @@ add_secret() {
   local key="$1"
   local value="${!key:-}"
   [[ -n "$value" ]] || fail "$key is not set. Export it before running this script."
+  if $VERCEL_BIN env ls production "${SCOPE_ARGS[@]}" "${AUTH_ARGS[@]}" 2>/dev/null | grep -Fq "$key"; then
+    printf 'Production variable already configured; leaving it unchanged: %s\n' "$key"
+    return 0
+  fi
   printf '%s' "$value" | $VERCEL_BIN env add "$key" production --yes "${SCOPE_ARGS[@]}" "${AUTH_ARGS[@]}" >/dev/null
   printf 'Configured encrypted production variable: %s\n' "$key"
 }
@@ -58,10 +66,14 @@ add_secret CAL_API_KEY
 
 # Non-secret configuration.
 if [[ -n "${SENDGRID_FROM_EMAIL:-}" ]]; then
-  printf '%s' "$SENDGRID_FROM_EMAIL" | $VERCEL_BIN env add SENDGRID_FROM_EMAIL production --yes "${SCOPE_ARGS[@]}" "${AUTH_ARGS[@]}" >/dev/null
+  if ! $VERCEL_BIN env ls production "${SCOPE_ARGS[@]}" "${AUTH_ARGS[@]}" 2>/dev/null | grep -Fq "SENDGRID_FROM_EMAIL"; then
+    printf '%s' "$SENDGRID_FROM_EMAIL" | $VERCEL_BIN env add SENDGRID_FROM_EMAIL production --yes "${SCOPE_ARGS[@]}" "${AUTH_ARGS[@]}" >/dev/null
+  fi
 fi
 if [[ -n "${CAL_EVENT_TYPE_ID:-}" ]]; then
-  printf '%s' "$CAL_EVENT_TYPE_ID" | $VERCEL_BIN env add CAL_EVENT_TYPE_ID production --yes "${SCOPE_ARGS[@]}" "${AUTH_ARGS[@]}" >/dev/null
+  if ! $VERCEL_BIN env ls production "${SCOPE_ARGS[@]}" "${AUTH_ARGS[@]}" 2>/dev/null | grep -Fq "CAL_EVENT_TYPE_ID"; then
+    printf '%s' "$CAL_EVENT_TYPE_ID" | $VERCEL_BIN env add CAL_EVENT_TYPE_ID production --yes "${SCOPE_ARGS[@]}" "${AUTH_ARGS[@]}" >/dev/null
+  fi
 fi
 
 say "Deploying directly from the local source tree to production."
