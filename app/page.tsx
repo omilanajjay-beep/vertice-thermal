@@ -7,6 +7,7 @@ import Hero3D from './components/Hero3D';
 type ChatMessage = { role: 'assistant' | 'user'; text: string };
 
 function Concierge() {
+  const sendLockRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -16,7 +17,8 @@ function Concierge() {
 
   const send = async () => {
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || sendLockRef.current) return;
+    sendLockRef.current = true;
     const next = [...messages, { role: 'user' as const, text }];
     setMessages(next);
     setInput('');
@@ -33,6 +35,7 @@ function Concierge() {
     } catch {
       setMessages((current) => [...current, { role: 'assistant', text: 'Elena is temporarily offline. Please leave your phone number and dispatch will follow up.' }]);
     } finally {
+      sendLockRef.current = false;
       setSending(false);
     }
   };

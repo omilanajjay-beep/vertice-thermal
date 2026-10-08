@@ -39,9 +39,10 @@ export default function Hero3D() {
     camera.lookAt(cameraTarget.current);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
+    const isMobile = window.matchMedia('(max-width: 700px), (pointer: coarse)').matches;
+    const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+    renderer.shadowMap.enabled = !isMobile;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
@@ -171,19 +172,20 @@ export default function Hero3D() {
 
     const clock = new THREE.Clock();
     const animate = () => {
-      const elapsed = clock.getElapsedTime();
       const delta = Math.min(clock.getDelta(), 0.05);
-      const fanSpeed = 1.05 + Math.sin(elapsed * 1.4) * 0.12;
+      const elapsed = clock.elapsedTime;
+      const fanSpeed = (isMobile ? 0.9 : 1.05) + Math.sin(elapsed * 1.4) * 0.12;
       rotor.rotation.z += delta * fanSpeed;
       ledRefs.current.forEach(({ led, glow }, index) => {
         const pulse = 0.78 + Math.sin(elapsed * 2.2 + index * 1.7) * 0.2;
         led.scale.setScalar(pulse);
         glow.intensity = 0.55 + pulse * 0.6;
       });
-      if (performance.now() - lastInteractionRef.current > 1500 && !cameraTweenRef.current?.isActive()) {
+      if (performance.now() - lastInteractionRef.current > 900 && !cameraTweenRef.current?.isActive()) {
         const base = cameraBaseRef.current;
-        camera.position.x = base.x + Math.sin(elapsed * 0.32) * 0.08;
-        camera.position.y = base.y + Math.cos(elapsed * 0.26) * 0.035;
+        const drift = isMobile ? 0.045 : 0.08;
+        camera.position.x = base.x + Math.sin(elapsed * 0.32) * drift;
+        camera.position.y = base.y + Math.cos(elapsed * 0.26) * drift * 0.44;
       }
       camera.lookAt(cameraTarget.current);
       renderer.render(scene, camera);
