@@ -20,6 +20,9 @@ export default function Hero3D() {
   const fanRef = useRef(null);
   const ledRefs = useRef([]);
   const frameRef = useRef(null);
+  const lastInteractionRef = useRef(0);
+  const cameraBaseRef = useRef({ x: 4.5, y: 2.8, z: 6.6 });
+  const cameraTweenRef = useRef(null);
   const [active, setActive] = useState('compressor');
 
   useEffect(() => {
@@ -31,6 +34,8 @@ export default function Hero3D() {
 
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
     camera.position.set(4.5, 2.8, 6.6);
+    cameraBaseRef.current = { x: 4.5, y: 2.8, z: 6.6 };
+    lastInteractionRef.current = performance.now();
     camera.lookAt(cameraTarget.current);
     cameraRef.current = camera;
 
@@ -167,12 +172,19 @@ export default function Hero3D() {
     const clock = new THREE.Clock();
     const animate = () => {
       const elapsed = clock.getElapsedTime();
-      rotor.rotation.z += 0.012;
+      const delta = Math.min(clock.getDelta(), 0.05);
+      const fanSpeed = 1.05 + Math.sin(elapsed * 1.4) * 0.12;
+      rotor.rotation.z += delta * fanSpeed;
       ledRefs.current.forEach(({ led, glow }, index) => {
         const pulse = 0.78 + Math.sin(elapsed * 2.2 + index * 1.7) * 0.2;
         led.scale.setScalar(pulse);
         glow.intensity = 0.55 + pulse * 0.6;
       });
+      if (performance.now() - lastInteractionRef.current > 1500 && !cameraTweenRef.current?.isActive()) {
+        const base = cameraBaseRef.current;
+        camera.position.x = base.x + Math.sin(elapsed * 0.32) * 0.08;
+        camera.position.y = base.y + Math.cos(elapsed * 0.26) * 0.035;
+      }
       camera.lookAt(cameraTarget.current);
       renderer.render(scene, camera);
       frameRef.current = requestAnimationFrame(animate);
@@ -195,10 +207,14 @@ export default function Hero3D() {
 
   const selectHotspot = (hotspot) => {
     setActive(hotspot.id);
+    lastInteractionRef.current = performance.now();
     const camera = cameraRef.current;
     if (!camera) return;
-    gsap.to(camera.position, { x: hotspot.camera[0], y: hotspot.camera[1], z: hotspot.camera[2], duration: 1.35, ease: 'power3.inOut' });
-    gsap.to(cameraTarget.current, { x: hotspot.target[0], y: hotspot.target[1], z: hotspot.target[2], duration: 1.35, ease: 'power3.inOut' });
+    cameraBaseRef.current = { x: hotspot.camera[0], y: hotspot.camera[1], z: hotspot.camera[2] };
+    cameraTweenRef.current?.kill();
+    cameraTweenRef.current = gsap.timeline({ defaults: { duration: 1.35, ease: 'power3.inOut' } })
+      .to(camera.position, { x: hotspot.camera[0], y: hotspot.camera[1], z: hotspot.camera[2] }, 0)
+      .to(cameraTarget.current, { x: hotspot.target[0], y: hotspot.target[1], z: hotspot.target[2] }, 0);
   };
 
   return (
