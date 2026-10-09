@@ -174,8 +174,11 @@ export default function Hero3D() {
     const animate = () => {
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
-      const fanSpeed = (isMobile ? 0.9 : 1.05) + Math.sin(elapsed * 1.4) * 0.12;
-      rotor.rotation.z += delta * fanSpeed;
+      // The rotor is rotated onto the front grille with X=PI/2, so its
+      // visible spin axis is Y—not Z. Keep the speed obvious on phones too.
+      const fanSpeed = (isMobile ? 2.25 : 2.75) + Math.sin(elapsed * 1.4) * 0.22;
+      rotor.rotation.y += delta * fanSpeed;
+      rotor.rotation.x = Math.PI / 2 + Math.sin(elapsed * 0.9) * 0.025;
       ledRefs.current.forEach(({ led, glow }, index) => {
         const pulse = 0.78 + Math.sin(elapsed * 2.2 + index * 1.7) * 0.2;
         led.scale.setScalar(pulse);
