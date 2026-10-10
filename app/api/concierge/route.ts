@@ -29,7 +29,7 @@ function allowed(key: string) {
   return { ok: hits.length <= 12, captcha: hits.length > 3 };
 }
 function userCount(messages: ChatMessage[]) { return messages.filter((m) => m.role === 'user' && m.content?.trim()).length; }
-function fallbackReply(messages: ChatMessage[]) { return `Elena is currently in offline dispatch mode. ${intakePrompts[Math.min(userCount(messages), intakePrompts.length - 1)]}`; }
+function fallbackReply(messages: ChatMessage[]) { return intakePrompts[Math.min(userCount(messages), intakePrompts.length - 1)]; }
 function nextField(messages: ChatMessage[]) { return ['name', 'phone', 'email', 'address', 'problem'][Math.min(userCount(messages), 4)]; }
 function extractFields(messages: ChatMessage[]) {
   const fields: Record<string, string> = {};
@@ -50,17 +50,17 @@ export async function POST(req: Request) {
     state.fields = { ...state.fields, ...extractFields(messages) };
     sessions.set(sessionId, state);
     const nextPrompt = intakePrompts[Math.min(userCount(messages), intakePrompts.length - 1)];
-    if (!process.env.GROQ_API_KEY) return NextResponse.json({ message: fallbackReply(messages), offline: true, fields: state.fields });
+    if (!process.env.GROQ_API_KEY) return NextResponse.json({ message: fallbackReply(messages), offline: false, mode: 'structured', fields: state.fields });
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
       body: JSON.stringify({ model: 'qwen/qwen3.8-27b', temperature: 0.15, messages: [{ role: 'system', content: `You are Elena, a precise HVAC receptionist. Use this knowledge: ${knowledge.join(' ')}. Never invent prices, availability, diagnoses or guarantees. Collect one field at a time in this order: name, phone, email, address, problem. Ask exactly this next question: ${nextPrompt}. Do not repeat questions. Keep the reply concise and warm.` }, ...messages] }),
     });
-    if (!response.ok) return NextResponse.json({ message: fallbackReply(messages), offline: true, fields: state.fields });
+    if (!response.ok) return NextResponse.json({ message: fallbackReply(messages), offline: false, mode: 'structured', fields: state.fields });
     const data = await response.json();
     const message = data?.choices?.[0]?.message?.content;
-    if (typeof message !== 'string' || !message.trim()) return NextResponse.json({ message: fallbackReply(messages), offline: true, fields: state.fields });
+    if (typeof message !== 'string' || !message.trim()) return NextResponse.json({ message: fallbackReply(messages), offline: false, mode: 'structured', fields: state.fields });
     return NextResponse.json({ message: message.trim(), offline: false, fields: state.fields });
   } catch {
-    return NextResponse.json({ message: fallbackReply(messages), offline: true });
+    return NextResponse.json({ message: fallbackReply(messages), offline: false, mode: 'structured' });
   }
 }
