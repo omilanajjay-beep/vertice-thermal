@@ -42,12 +42,21 @@ function MotionDirector() {
 
 function Concierge() {
   const sendLockRef = useRef(false);
+  const sessionIdRef = useRef('');
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([{ role: 'assistant', text: 'Good evening. I’m Elena, your VERTICE dispatch concierge. May I start with your name?' }]);
   const [booked, setBooked] = useState('');
   const slots = ['Tomorrow, 09:30', 'Tomorrow, 13:00', 'Thursday, 16:30'];
+
+  useEffect(() => {
+    const key = 'vertice-concierge-session';
+    const existing = window.sessionStorage.getItem(key);
+    const id = existing || crypto.randomUUID();
+    sessionIdRef.current = id;
+    window.sessionStorage.setItem(key, id);
+  }, []);
 
   const send = async () => {
     const text = input.trim();
@@ -61,7 +70,7 @@ function Concierge() {
       const response = await fetch('/api/concierge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next.map((message) => ({ role: message.role, content: message.text })) }),
+        body: JSON.stringify({ sessionId: sessionIdRef.current, messages: next.map((message) => ({ role: message.role, content: message.text })) }),
       });
       const data = await response.json();
       const reply = typeof data.message === 'string' && data.message.trim() ? data.message.trim() : 'Please share the next detail when you are ready.';
@@ -79,9 +88,10 @@ function Concierge() {
     const response = await fetch('/api/book', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slot, attendee: { email: process.env.NEXT_PUBLIC_DISPATCH_EMAIL } }),
+      body: JSON.stringify({ slot, sessionId: sessionIdRef.current, attendee: { email: process.env.NEXT_PUBLIC_DISPATCH_EMAIL } }),
     });
     const data = await response.json();
+    if (data.bookingUrl && !data.ok) window.open(data.bookingUrl, '_blank', 'noopener,noreferrer');
     setMessages((current) => [...current, { role: 'assistant', text: data.ok ? `Perfect — I’ve held ${slot}. A confirmation is on its way.` : data.message }]);
   };
 

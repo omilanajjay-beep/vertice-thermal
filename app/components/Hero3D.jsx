@@ -23,6 +23,7 @@ export default function Hero3D() {
   const lastInteractionRef = useRef(0);
   const cameraBaseRef = useRef({ x: 4.5, y: 2.8, z: 6.6 });
   const cameraTweenRef = useRef(null);
+  const assemblyPartsRef = useRef([]);
   const [active, setActive] = useState('compressor');
 
   useEffect(() => {
@@ -162,6 +163,24 @@ export default function Hero3D() {
       return { led, glow };
     });
 
+    assemblyPartsRef.current = [
+      { object: body, offset: [0, 1.25, -0.35] },
+      { object: front, offset: [0, -0.8, 0.55] },
+      { object: grille, offset: [0, 0.55, 0.2] },
+      { object: hub, offset: [0, -0.35, 0.75] },
+      { object: rotor, offset: [0, 0.45, 0.85] },
+      ...ledRefs.current.map(({ led }) => ({ object: led, offset: [0, 0.7, 0.8] })),
+    ].map(({ object, offset }) => ({ object, offset, base: object.position.clone() }));
+
+    const updateAssembly = () => {
+      const rect = mount.current?.getBoundingClientRect();
+      if (!rect) return;
+      const progress = Math.max(0, Math.min(1, (window.innerHeight * 0.72 - rect.top) / Math.max(rect.height * 0.85, 1)));
+      assemblyPartsRef.current.forEach(({ object, offset, base }) => {
+        object.position.set(base.x + offset[0] * (1 - progress), base.y + offset[1] * (1 - progress), base.z + offset[2] * (1 - progress));
+      });
+    };
+
     const resize = () => {
       if (!mount.current) return;
       const { width, height } = mount.current.getBoundingClientRect();
@@ -196,11 +215,14 @@ export default function Hero3D() {
     };
 
     resize();
+    updateAssembly();
     window.addEventListener('resize', resize);
+    window.addEventListener('scroll', updateAssembly, { passive: true });
     animate();
 
     return () => {
       window.removeEventListener('resize', resize);
+      window.removeEventListener('scroll', updateAssembly);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
       gsap.killTweensOf(camera.position);
       gsap.killTweensOf(cameraTarget.current);
