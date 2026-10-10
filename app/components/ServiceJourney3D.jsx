@@ -5,10 +5,10 @@ import { gsap } from 'gsap';
 import * as THREE from 'three';
 
 const scenes = [
-  { id: 'repair', label: 'THE CRAFT', title: 'People who know the system.', copy: 'A quiet repair is a precise one. Our engineers work around the home, not against it.' },
-  { id: 'home', label: 'THE RESULT', title: 'Comfort moves through the home.', copy: 'From first commissioning to the last room upstairs, every space stays in the conversation.' },
-  { id: 'growth', label: 'THE NETWORK', title: 'Good work compounds.', copy: 'Qualified service, predictable aftercare and a contractor network built to last.' },
-  { id: 'review', label: 'THE PROOF', title: 'The people notice.', copy: 'Real homes. Real technicians. A better feeling when the system disappears into daily life.' },
+  { id: 'repair', label: 'THE CRAFT', title: 'People who know the system.', copy: 'A quiet repair is a precise one. Our engineers work around the home, not against it.', image: '/scenes/repair-technician.jpg' },
+  { id: 'home', label: 'THE RESULT', title: 'Comfort moves through the home.', copy: 'From first commissioning to the last room upstairs, every space stays in the conversation.', image: '/scenes/house-services.jpg' },
+  { id: 'growth', label: 'THE NETWORK', title: 'Good work compounds.', copy: 'Qualified service, predictable aftercare and a contractor network built to last.', image: '/scenes/review-technician.jpg' },
+  { id: 'review', label: 'THE PROOF', title: 'The people notice.', copy: 'Real homes. Real technicians. A better feeling when the system disappears into daily life.', image: '/scenes/contact-homeowners.jpg' },
 ];
 
 function person(color, scale = 1) {
@@ -164,5 +164,5 @@ export default function ServiceJourney3D() {
     sceneGroups.forEach((group, i) => { group.visible = i === index; if (i === index) { group.scale.setScalar(0.8); gsap.to(group.scale, { x: 1, y: 1, z: 1, duration: 0.8, ease: 'back.out(1.7)' }); } });
   };
 
-  return <div className="journey-shell"><div className="journey-stage" ref={mount} /><div className="journey-copy"><span className="eyebrow">05 / THE SERVICE STORY</span><h2>{scenes[active].title}</h2><p>{scenes[active].copy}</p><div className="journey-tabs">{scenes.map((item, index) => <button className={active === index ? 'active' : ''} key={item.id} onClick={() => changeScene(index)}><span>{String(index + 1).padStart(2, '0')}</span>{item.label}</button>)}</div></div></div>;
+  return <div className="journey-shell"><div className="journey-stage" ref={mount}><div className="journey-realistic"><img key={scenes[active].image} src={scenes[active].image} alt="" /></div><div className="journey-grain" /></div><div className="journey-copy"><span className="eyebrow">05 / THE SERVICE STORY</span><h2>{scenes[active].title}</h2><p>{scenes[active].copy}</p><div className="journey-tabs">{scenes.map((item, index) => <button className={active === index ? 'active' : ''} key={item.id} onClick={() => changeScene(index)}><span>{String(index + 1).padStart(2, '0')}</span>{item.label}</button>)}</div></div></div>;
 }
