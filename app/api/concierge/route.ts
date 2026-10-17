@@ -75,7 +75,8 @@ async function acknowledgeIssue(answer: string) {
       body: JSON.stringify({
         model: 'openai/gpt-oss-120b',
         temperature: 0.25,
-        max_completion_tokens: 48,
+        max_completion_tokens: 512,
+        reasoning_effort: 'low',
         messages: [
           { role: 'system', content: 'You are Elena, a calm HVAC dispatch concierge. Write one brief empathetic sentence acknowledging the issue category. Do not ask any question, diagnose, quote prices, claim availability, or promise an outcome. Keep it under 16 words.' },
           { role: 'user', content: `The resident reported ${safeCategory}.` },
