@@ -46,11 +46,28 @@ function classifyIssue(text: string) {
   return 'a home-comfort concern';
 }
 
+function logAiDiagnostic(event: string, details: Record<string, string | number | boolean> = {}) {
+  console.info(JSON.stringify({ event: `concierge_ai_${event}`, ...details }));
+}
+
+function upstreamStatusCategory(status: number) {
+  if (status === 401 || status === 403) return 'authentication';
+  if (status === 404) return 'model_or_endpoint_not_found';
+  if (status === 429) return 'rate_limited';
+  if (status >= 500) return 'upstream_server_error';
+  if (status >= 400) return 'request_rejected';
+  return 'unexpected_status';
+}
+
 async function acknowledgeIssue(answer: string) {
   const safeCategory = classifyIssue(answer);
   const fallback = 'Thank you for explaining. I’ll look for a suitable visit time.';
   const key = process.env.GROQ_API_KEY;
-  if (!key) return fallback;
+  if (!key) {
+    logAiDiagnostic('fallback', { key_present: false, category: 'missing_key' });
+    return fallback;
+  }
+  logAiDiagnostic('attempt', { key_present: true });
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -67,14 +84,37 @@ async function acknowledgeIssue(answer: string) {
       signal: AbortSignal.timeout(8000),
       cache: 'no-store',
     });
-    if (!response.ok) return fallback;
-    const data = await response.json();
+    if (!response.ok) {
+      logAiDiagnostic('fallback', {
+        key_present: true,
+        upstream_status: response.status,
+        category: upstreamStatusCategory(response.status),
+      });
+      return fallback;
+    }
+    let data: { choices?: Array<{ message?: { content?: unknown } }> };
+    try {
+      data = await response.json();
+    } catch {
+      logAiDiagnostic('fallback', { key_present: true, upstream_status: response.status, category: 'invalid_json' });
+      return fallback;
+    }
     const content = data?.choices?.[0]?.message?.content;
-    if (typeof content !== 'string') return fallback;
+    if (typeof content !== 'string') {
+      logAiDiagnostic('fallback', { key_present: true, upstream_status: response.status, category: 'invalid_response_shape' });
+      return fallback;
+    }
     const reply = content.replace(/[\r\n]+/g, ' ').trim();
-    if (!reply || reply.includes('?') || reply.length > 180) return fallback;
+    if (!reply || reply.includes('?') || reply.length > 180) {
+      const category = !reply ? 'empty_reply' : reply.includes('?') ? 'reply_contains_question' : 'reply_too_long';
+      logAiDiagnostic('fallback', { key_present: true, upstream_status: response.status, category });
+      return fallback;
+    }
+    logAiDiagnostic('success', { key_present: true, upstream_status: response.status });
     return reply;
-  } catch {
+  } catch (error) {
+    const isTimeout = typeof error === 'object' && error !== null && 'name' in error && error.name === 'TimeoutError';
+    logAiDiagnostic('fallback', { key_present: true, category: isTimeout ? 'timeout' : 'network_error' });
     return fallback;
   }
 }
