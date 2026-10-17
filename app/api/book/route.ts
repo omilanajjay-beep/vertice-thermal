@@ -86,6 +86,8 @@ export async function POST(request: Request) {
         ...bookingEventIdentity(config),
         start: new Date(startTime).toISOString(),
         attendee: { name, email, phoneNumber: phone, timeZone, language: 'en' },
+        // These slugs match the required custom fields on the Cal.com event type.
+        bookingFieldsResponses: { 'service-address': address, 'hvac-issue': problem },
       }),
       cache: 'no-store',
       signal: AbortSignal.timeout(15000),
@@ -100,8 +102,9 @@ export async function POST(request: Request) {
 
   const bookingPayload = await bookingResponse.json().catch(() => ({}));
   const dateLabel = new Intl.DateTimeFormat('en', { dateStyle: 'full', timeStyle: 'short', timeZone }).format(new Date(startTime));
-  const homeownerMessage = `Hello ${name},\n\nYour VERTICE THERMAL visit is confirmed for ${dateLabel} (${timeZone}).\n\nOur dispatch team will contact you if any details are needed.\n\nVERTICE THERMAL`;
-  const technicianMessage = `A VERTICE THERMAL appointment has been booked.\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email}\nAddress: ${address}\nVisit: ${dateLabel} (${timeZone})\nConcern: ${problem}\n\nPlease follow up with the homeowner as needed.`;
+  const visitDetails = `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nAddress: ${address}\nVisit: ${dateLabel} (${timeZone})\nHVAC issue: ${problem}`;
+  const homeownerMessage = `Hello ${name},\n\nYour VERTICE THERMAL visit is confirmed for ${dateLabel} (${timeZone}).\n\n${visitDetails}\n\nOur dispatch team will contact you if any details are needed.\n\nVERTICE THERMAL`;
+  const technicianMessage = `A VERTICE THERMAL appointment has been booked.\n\n${visitDetails}\n\nPlease follow up with the homeowner as needed.`;
   const emailResults = await Promise.allSettled([
     sendEmail(email, 'Your VERTICE THERMAL visit is confirmed', homeownerMessage),
     sendEmail(technician, 'New VERTICE THERMAL appointment', technicianMessage),
