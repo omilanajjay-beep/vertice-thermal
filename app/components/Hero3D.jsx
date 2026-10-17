@@ -5,9 +5,9 @@ import { gsap } from 'gsap';
 import * as THREE from 'three';
 
 const HOTSPOTS = [
-  { id: 'compressor', label: 'Inverter compressor', note: 'Variable output', left: '12%', top: '62%', camera: [-3.0, 1.65, 5.5], target: [-0.82, 0.18, 0.12] },
-  { id: 'fan', label: 'AeroBlade fan', note: 'Low-noise airflow', left: '55%', top: '30%', camera: [0.65, 1.55, 4.35], target: [0.0, 0.18, 0.62] },
-  { id: 'exchanger', label: 'Copper core exchanger', note: 'Thermal exchange', left: '70%', top: '62%', camera: [3.0, 1.55, 4.9], target: [0.92, 0.1, 0.48] },
+  { id: 'compressor', label: 'Inverter compressor', note: 'Variable output', left: '12%', top: '62%', anchor: [-1.02, 0.16, 0.78], camera: [-3.0, 1.65, 5.5], target: [-0.82, 0.18, 0.12] },
+  { id: 'fan', label: 'AeroBlade fan', note: 'Low-noise airflow', left: '55%', top: '30%', anchor: [-0.15, 0.16, 1.02], camera: [0.65, 1.55, 4.35], target: [0.0, 0.18, 0.62] },
+  { id: 'exchanger', label: 'Copper core exchanger', note: 'Thermal exchange', left: '70%', top: '62%', anchor: [0.92, 0.1, 0.58], camera: [3.0, 1.55, 4.9], target: [0.92, 0.1, 0.48] },
 ];
 
 function createSlateTexture() {
@@ -115,7 +115,11 @@ export default function Hero3D() {
   const mountRef = useRef(null);
   const cameraRef = useRef(null);
   const targetRef = useRef(new THREE.Vector3(0, 0.2, 0.05));
+  const cameraGoalRef = useRef(new THREE.Vector3(3.6, 2.55, 7.35));
   const cameraTweenRef = useRef(null);
+  const pointerRef = useRef(new THREE.Vector2());
+  const hotspotRefs = useRef({});
+  const reducedMotionRef = useRef(false);
   const fanRef = useRef(null);
   const ledRefs = useRef([]);
   const [active, setActive] = useState('fan');
@@ -125,6 +129,7 @@ export default function Hero3D() {
     const mount = mountRef.current;
     const mobile = window.matchMedia('(max-width: 680px), (pointer: coarse)').matches;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    reducedMotionRef.current = reducedMotion;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#171818');
     scene.fog = new THREE.Fog('#171818', 10, 27);
@@ -133,6 +138,7 @@ export default function Hero3D() {
     camera.position.set(3.6, 2.55, 7.35);
     camera.lookAt(targetRef.current);
     cameraRef.current = camera;
+    cameraGoalRef.current.copy(camera.position);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2.25));
@@ -303,19 +309,62 @@ export default function Hero3D() {
     resize();
     const onResize = () => resize();
     window.addEventListener('resize', onResize, { passive: true });
+    const interactionRoot = mount.parentElement || mount;
+    const onPointerMove = (event) => {
+      if (mobile || reducedMotion) return;
+      const bounds = interactionRoot.getBoundingClientRect();
+      const x = ((event.clientX - bounds.left) / Math.max(bounds.width, 1)) * 2 - 1;
+      const y = 1 - ((event.clientY - bounds.top) / Math.max(bounds.height, 1)) * 2;
+      pointerRef.current.set(THREE.MathUtils.clamp(x, -1, 1), THREE.MathUtils.clamp(y, -1, 1));
+    };
+    const onPointerLeave = () => pointerRef.current.set(0, 0);
+    interactionRoot.addEventListener('pointermove', onPointerMove, { passive: true });
+    interactionRoot.addEventListener('pointerleave', onPointerLeave, { passive: true });
 
     let frame = 0;
     const clock = new THREE.Clock();
+    const desiredCamera = new THREE.Vector3();
+    const desiredLook = new THREE.Vector3();
+    const projectedHotspot = new THREE.Vector3();
     const animate = () => {
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
-      if (!reducedMotion) rotor.rotation.z += delta * (mobile ? 2.2 : 2.65);
+      const pointer = pointerRef.current;
+      const drift = reducedMotion ? 0 : Math.sin(elapsed * 0.34) * 0.035;
+      desiredCamera.set(
+        cameraGoalRef.current.x + (reducedMotion || mobile ? 0 : pointer.x * 0.2) + drift,
+        cameraGoalRef.current.y + (reducedMotion || mobile ? 0 : pointer.y * 0.11) + (reducedMotion ? 0 : Math.sin(elapsed * 0.47) * 0.018),
+        cameraGoalRef.current.z + (reducedMotion || mobile ? 0 : pointer.x * 0.045),
+      );
+      if (reducedMotion) camera.position.copy(cameraGoalRef.current);
+      else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.2));
+      if (!reducedMotion) {
+        rotor.rotation.z += delta * (mobile ? 2.2 : 2.65);
+        warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18;
+      }
       ledRefs.current.forEach(({ led, glow }, index) => {
         const pulse = reducedMotion ? 1 : 0.78 + Math.sin(elapsed * 2.1 + index * 1.6) * 0.16;
         led.scale.setScalar(pulse);
         glow.intensity = 0.35 + pulse * 0.34;
       });
-      camera.lookAt(targetRef.current);
+      desiredLook.set(
+        targetRef.current.x + (reducedMotion || mobile ? 0 : pointer.x * 0.035),
+        targetRef.current.y + (reducedMotion || mobile ? 0 : pointer.y * 0.025),
+        targetRef.current.z,
+      );
+      camera.lookAt(desiredLook);
+      HOTSPOTS.forEach((hotspot) => {
+        const element = hotspotRefs.current[hotspot.id];
+        if (!element) return;
+        projectedHotspot.set(...hotspot.anchor).project(camera);
+        const visible = projectedHotspot.z > -1 && projectedHotspot.z < 1
+          && Math.abs(projectedHotspot.x) < 0.96 && Math.abs(projectedHotspot.y) < 0.94;
+        element.style.visibility = visible ? 'visible' : 'hidden';
+        if (visible) {
+          element.style.left = `${(projectedHotspot.x * 0.5 + 0.5) * 100}%`;
+          element.style.top = `${(-projectedHotspot.y * 0.5 + 0.5) * 100}%`;
+        }
+      });
       renderer.render(scene, camera);
       frame = requestAnimationFrame(animate);
     };
@@ -323,6 +372,8 @@ export default function Hero3D() {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      interactionRoot.removeEventListener('pointermove', onPointerMove);
+      interactionRoot.removeEventListener('pointerleave', onPointerLeave);
       cancelAnimationFrame(frame);
       cameraTweenRef.current?.kill();
       scene.traverse((object) => {
@@ -339,6 +390,7 @@ export default function Hero3D() {
       renderer.domElement.remove();
       mount.replaceChildren();
       ledRefs.current = [];
+      hotspotRefs.current = {};
       fanRef.current = null;
     };
   }, []);
@@ -348,8 +400,13 @@ export default function Hero3D() {
     if (!camera) return;
     setActive(hotspot.id);
     cameraTweenRef.current?.kill();
+    if (reducedMotionRef.current) {
+      cameraGoalRef.current.set(...hotspot.camera);
+      targetRef.current.set(...hotspot.target);
+      return;
+    }
     cameraTweenRef.current = gsap.timeline({ defaults: { duration: 1.35, ease: 'power3.inOut' } })
-      .to(camera.position, { x: hotspot.camera[0], y: hotspot.camera[1], z: hotspot.camera[2] }, 0)
+      .to(cameraGoalRef.current, { x: hotspot.camera[0], y: hotspot.camera[1], z: hotspot.camera[2] }, 0)
       .to(targetRef.current, { x: hotspot.target[0], y: hotspot.target[1], z: hotspot.target[2] }, 0);
   };
 
@@ -361,6 +418,7 @@ export default function Hero3D() {
         key={hotspot.id}
         className={`hotspot ${active === hotspot.id ? 'active' : ''}`}
         style={{ left: hotspot.left, top: hotspot.top }}
+        ref={(element) => { hotspotRefs.current[hotspot.id] = element; }}
         onClick={() => focusHotspot(hotspot)}
         aria-pressed={active === hotspot.id}
         aria-label={`Focus on ${hotspot.label}`}
