@@ -1,124 +1,337 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, Check, ChevronRight, Gauge, Menu, MessageCircle, Play, ShieldCheck, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  BadgeCheck,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Clock3,
+  Fan,
+  MapPin,
+  Menu,
+  MessageCircle,
+  Send,
+  ShieldCheck,
+  Snowflake,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Hero3D from './components/Hero3D';
-import ServiceJourney3D from './components/ServiceJourney3D';
 
-type ChatMessage = { role: 'assistant' | 'user'; text: string };
+type Role = 'assistant' | 'user';
+type ChatMessage = { role: Role; text: string };
+type IntakeStep = 'name' | 'phone' | 'email' | 'address' | 'problem';
+type Intake = Record<IntakeStep, string>;
+type AvailableSlot = { start: string; end?: string; date: string };
+
+const intakeFields: IntakeStep[] = ['name', 'phone', 'email', 'address', 'problem'];
+const questions = [
+  'What name should I use for you?',
+  'What is the best phone number to reach you?',
+  'Which email address should we use for your appointment details?',
+  'What is the property address for the visit?',
+  'How would you describe the heating or cooling issue?',
+];
+const emptyIntake: Intake = { name: '', phone: '', email: '', address: '', problem: '' };
+
+function localDateInZone(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const read = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  return `${read('year')}-${read('month')}-${read('day')}`;
+}
+
+function shiftDate(date: string, days: number) {
+  const [year, month, day] = date.split('-').map(Number);
+  const result = new Date(Date.UTC(year, month - 1, day + days));
+  return `${result.getUTCFullYear()}-${String(result.getUTCMonth() + 1).padStart(2, '0')}-${String(result.getUTCDate()).padStart(2, '0')}`;
+}
+
+function formatSlotTime(value: string, timeZone: string) {
+  return new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit', timeZone }).format(new Date(value));
+}
+
+function formatSlotDay(value: string, timeZone: string) {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Intl.DateTimeFormat('en', { weekday: 'short', month: 'short', day: 'numeric', timeZone }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+}
 
 function MotionDirector() {
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const ctx = gsap.context(() => {
-      if (reduced) {
-        gsap.set('[data-motion]', { opacity: 1, y: 0, x: 0, rotateX: 0, scale: 1 });
-        return;
-      }
-      gsap.fromTo('.topbar, nav', { opacity: 0, y: -18 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.12, ease: 'power3.out' });
-      gsap.fromTo('.hero-copy > *', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.9, stagger: 0.1, delay: 0.25, ease: 'power3.out' });
-      gsap.fromTo('.hero-visual', { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 1.4, delay: 0.2, ease: 'power3.out' });
-      gsap.utils.toArray<HTMLElement>('[data-motion]').forEach((element) => {
-        gsap.fromTo(element, { opacity: 0, y: 42, rotateX: 5 }, {
-          opacity: 1, y: 0, rotateX: 0, duration: 0.85, ease: 'power3.out',
-          scrollTrigger: { trigger: element, start: 'top 86%', once: true },
+    if (reduced) return;
+    const intro = gsap.context(() => {
+      gsap.fromTo('.hero-copy > *', { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.09, ease: 'power3.out', delay: 0.12 });
+      gsap.fromTo('.hero-visual', { opacity: 0, scale: 1.015 }, { opacity: 1, scale: 1, duration: 1.25, ease: 'power3.out' });
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
         });
-      });
-      gsap.utils.toArray<HTMLElement>('[data-parallax]').forEach((element) => {
-        gsap.to(element, { yPercent: -8, ease: 'none', scrollTrigger: { trigger: element, scrub: 1.2 } });
-      });
-      gsap.to('.marquee span', { xPercent: -7, ease: 'none', scrollTrigger: { trigger: '.marquee', scrub: 1 } });
-      gsap.utils.toArray<HTMLElement>('.feature, .person, .review').forEach((element, index) => {
-        gsap.fromTo(element, { x: index % 2 ? 24 : -24 }, { x: 0, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: element, start: 'top 90%', once: true } });
-      });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('[data-reveal]').forEach((element) => observer.observe(element));
+      return () => observer.disconnect();
     });
-    return () => ctx.revert();
+    return () => intro.revert();
   }, []);
   return null;
 }
 
-function Concierge() {
-  const sendLockRef = useRef(false);
-  const sessionIdRef = useRef('');
-  const [open, setOpen] = useState(false);
+function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) => void }) {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: 'assistant', text: 'Hello, I’m Elena, the VERTICE dispatch concierge. What name should I use for you?' },
+  ]);
+  const [intake, setIntake] = useState<Intake>(emptyIntake);
+  const [step, setStep] = useState(0);
   const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([{ role: 'assistant', text: 'Good evening. I’m Elena, your VERTICE dispatch concierge. May I start with your name?' }]);
-  const [booked, setBooked] = useState('');
-  const slots = ['Tomorrow, 09:30', 'Tomorrow, 13:00', 'Thursday, 16:30'];
+  const [busy, setBusy] = useState(false);
+  const [slots, setSlots] = useState<AvailableSlot[]>([]);
+  const [timeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [slotUnavailable, setSlotUnavailable] = useState(false);
+  const [consented, setConsented] = useState(false);
+  const [booked, setBooked] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
-  useEffect(() => {
-    const key = 'vertice-concierge-session';
-    const existing = window.sessionStorage.getItem(key);
-    const id = existing || crypto.randomUUID();
-    sessionIdRef.current = id;
-    window.sessionStorage.setItem(key, id);
-  }, []);
+  const grouped = useMemo(() => slots.reduce<Record<string, AvailableSlot[]>>((days, slot) => {
+    days[slot.date] ??= [];
+    days[slot.date].push(slot);
+    return days;
+  }, {}), [slots]);
+
+  const validate = (field: IntakeStep, value: string) => {
+    if (field === 'name' && value.trim().length < 2) return 'Please enter at least two characters for your name.';
+    if (field === 'phone' && value.replace(/\D/g, '').length < 7) return 'Please enter a phone number with at least seven digits.';
+    if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
+    if (field === 'address' && value.trim().length < 5) return 'Please include the street and area for the property.';
+    if (field === 'problem' && value.trim().length < 8) return 'Please share a little more about what the system is doing.';
+    return '';
+  };
+
+  const loadSlots = async () => {
+    setSlotUnavailable(false);
+    const first = shiftDate(localDateInZone(new Date(), timeZone), 1);
+    const last = shiftDate(first, 13);
+    try {
+      const query = new URLSearchParams({ start: first, end: last, timeZone });
+      const response = await fetch(`/api/slots?${query.toString()}`, { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !Array.isArray(data.slots)) throw new Error('availability-unavailable');
+      setSlots(data.slots);
+      setSlotUnavailable(data.slots.length === 0);
+    } catch {
+      setSlotUnavailable(true);
+    }
+  };
 
   const send = async () => {
-    const text = input.trim();
-    if (!text || sending || sendLockRef.current) return;
-    sendLockRef.current = true;
-    const next = [...messages, { role: 'user' as const, text }];
-    setMessages(next);
+    const answer = input.trim();
+    if (!answer || busy || step >= intakeFields.length) return;
+    const field = intakeFields[step];
+    const validation = validate(field, answer);
+    if (validation) {
+      setMessages((current) => [...current, { role: 'assistant', text: validation }]);
+      setInput('');
+      return;
+    }
+
+    const nextIntake = { ...intake, [field]: answer };
+    setIntake(nextIntake);
+    const withUser: ChatMessage[] = [...messages, { role: 'user', text: answer }];
+    setMessages(withUser);
     setInput('');
-    setSending(true);
+    setBusy(true);
+
     try {
       const response = await fetch('/api/concierge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: sessionIdRef.current, messages: next.map((message) => ({ role: message.role, content: message.text })) }),
+        body: JSON.stringify({ step: field, answer, website: honeypot }),
       });
       const data = await response.json();
-      const reply = typeof data.message === 'string' && data.message.trim() ? data.message.trim() : 'Please share the next detail when you are ready.';
-      setMessages((current) => [...current, { role: 'assistant', text: reply }]);
-    } catch {
-      setMessages((current) => [...current, { role: 'assistant', text: 'Elena is temporarily offline. Please leave your phone number and dispatch will follow up.' }]);
+      if (!response.ok) throw new Error(data.error || 'I could not process that just now. Please try again.');
+      const nextMessages: ChatMessage[] = [...withUser, { role: 'assistant', text: data.reply || 'Thank you. I have that detail.' }];
+      if (data.complete) {
+        setStep(intakeFields.length);
+        setMessages(nextMessages);
+        setBusy(false);
+        await loadSlots();
+        return;
+      }
+      const nextStep = step + 1;
+      setStep(nextStep);
+      setMessages([...nextMessages, { role: 'assistant', text: data.nextQuestion || questions[nextStep] }]);
+    } catch (error) {
+      setMessages([...withUser, { role: 'assistant', text: error instanceof Error ? error.message : 'Please try again in a moment.' }]);
     } finally {
-      sendLockRef.current = false;
-      setSending(false);
+      setBusy(false);
     }
   };
 
-  const book = async (slot: string) => {
-    setBooked(slot);
-    const response = await fetch('/api/book', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slot, sessionId: sessionIdRef.current, attendee: { email: process.env.NEXT_PUBLIC_DISPATCH_EMAIL } }),
-    });
-    const data = await response.json();
-    if (data.bookingUrl && !data.ok) window.open(data.bookingUrl, '_blank', 'noopener,noreferrer');
-    setMessages((current) => [...current, { role: 'assistant', text: data.ok ? `Perfect — I’ve held ${slot}. A confirmation is on its way.` : data.message }]);
+  const confirmBooking = async () => {
+    if (!selectedSlot || !consented || busy || booked) return;
+    setBusy(true);
+    try {
+      const response = await fetch('/api/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start: selectedSlot, timeZone, attendee: intake }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'That time could not be reserved. Please choose another slot.');
+      setBooked(true);
+      setMessages((current) => [...current, {
+        role: 'assistant',
+        text: data.emailWarning
+          ? 'Your appointment is reserved. One of the confirmation emails could not be sent, so dispatch will need to follow up.'
+          : 'Your appointment is confirmed. A confirmation email has been sent to you and the on-call technician.',
+      }]);
+    } catch (error) {
+      setMessages((current) => [...current, { role: 'assistant', text: error instanceof Error ? error.message : 'Please try another time.' }]);
+      setSelectedSlot('');
+      await loadSlots();
+    } finally {
+      setBusy(false);
+    }
   };
 
   return <>
-    <button className="chat-launch" onClick={() => setOpen(true)}><span className="live-dot" /> <MessageCircle size={18} /> <span>Elena is online</span></button>
-    {open && <div className="chat-drawer">
-      <div className="chat-head"><div><span className="eyebrow">DISPATCH CONCIERGE</span><h3>Elena <span>• online</span></h3></div><button onClick={() => setOpen(false)} aria-label="Close concierge"><X size={18} /></button></div>
-      <div className="chat-body">{messages.map((message, index) => <div key={`${message.role}-${index}`} className={`bubble ${message.role}`}>{message.text}</div>)}{sending && <div className="bubble assistant">Elena is typing…</div>}{messages.filter((message) => message.role === 'user').length >= 5 && !booked && <div className="slot-picker"><span className="eyebrow">SELECT A SURVEY WINDOW</span>{slots.map((slot) => <button key={slot} onClick={() => book(slot)}>{slot}<ArrowUpRight size={14} /></button>)}</div>}</div>
-      <div className="chat-input"><input value={input} disabled={sending} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void send(); } }} placeholder={sending ? 'Elena is replying…' : 'Type your reply…'} /><button onClick={() => void send()} disabled={sending || !input.trim()} aria-label="Send message"><ArrowUpRight size={18} /></button></div>
-    </div>}
+    {!open && <button className="chat-launcher" onClick={() => setOpen(true)} aria-label="Open Elena, the HVAC dispatch concierge">
+      <span className="launcher-status" aria-hidden="true" />
+      <MessageCircle size={17} strokeWidth={1.7} />
+      <span>Speak with Elena</span>
+      <ArrowUpRight size={15} className="launcher-arrow" />
+    </button>}
+    {open && <aside className="chat-drawer" aria-label="Elena concierge chat">
+      <header className="chat-header">
+        <div className="concierge-avatar" aria-hidden="true"><Snowflake size={18} /></div>
+        <div className="chat-title"><span className="eyebrow">DISPATCH CONCIERGE</span><h2>Elena <span className="online-label"><i /> ready</span></h2></div>
+        <button className="icon-button" onClick={() => setOpen(false)} aria-label="Close chat"><X size={18} /></button>
+      </header>
+      <div className="chat-messages" aria-live="polite">
+        {messages.map((message, index) => <div key={`${message.role}-${index}`} className={`chat-bubble ${message.role}`}>{message.text}</div>)}
+        {busy && <div className="chat-bubble assistant typing"><span /><span /><span /></div>}
+        {step === intakeFields.length && !busy && !booked && <div className="appointment-panel">
+          <div className="appointment-title"><CalendarDays size={15} /><span>AVAILABLE VISIT TIMES</span></div>
+          {slotUnavailable ? <p className="slot-empty">Live appointment times are not available right now. Please try again later.</p> : <>
+            {Object.entries(grouped).map(([date, daySlots]) => <div className="slot-day" key={date}>
+              <span className="slot-day-label">{formatSlotDay(date, timeZone)}</span>
+              <div className="slot-grid">{daySlots.map((slot) => <button key={slot.start} className={`slot-choice ${selectedSlot === slot.start ? 'selected' : ''}`} onClick={() => setSelectedSlot(slot.start)} disabled={busy}>{formatSlotTime(slot.start, timeZone)}</button>)}</div>
+            </div>)}
+            <div className="timezone-note"><Clock3 size={12} /> Times shown in {timeZone}</div>
+            <label className="consent-line"><input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)} /> <span>Share these details with our booking and email providers to arrange this visit.</span></label>
+            <button className="confirm-slot" onClick={() => void confirmBooking()} disabled={!selectedSlot || !consented || busy}>{busy ? 'Confirming…' : 'Confirm appointment'}<ArrowRight size={15} /></button>
+          </>}
+        </div>}
+        {booked && <div className="booking-confirmation"><BadgeCheck size={18} /><span>Appointment confirmed</span></div>}
+      </div>
+      {step < intakeFields.length && <form className="chat-compose" onSubmit={(event) => { event.preventDefault(); void send(); }}>
+        <label className="honeypot" aria-hidden="true">Website<input tabIndex={-1} autoComplete="off" value={honeypot} onChange={(event) => setHoneypot(event.target.value)} /></label>
+        <input value={input} onChange={(event) => setInput(event.target.value)} maxLength={step === 4 ? 800 : 240} placeholder={busy ? 'Elena is replying…' : 'Write a reply'} aria-label="Your reply" disabled={busy} />
+        <button type="submit" disabled={busy || !input.trim()} aria-label="Send reply"><Send size={16} /></button>
+      </form>}
+      <p className="chat-footnote">One detail at a time. Your contact details are used to arrange the requested visit.</p>
+    </aside>}
   </>;
 }
 
 export default function Home() {
-  const [monthly, setMonthly] = useState(3);
-  const [menu, setMenu] = useState(false);
-  const annual = 2500 * monthly + 1000 * monthly * 12;
-  return <main>
-    <div className="topbar"><span><span className="live-dot" /> SYSTEM STATUS: ALL NETWORKS NOMINAL</span><span className="topbar-right">SERVICE AREA: LONDON / SURREY / KENT <ArrowUpRight size={13} /></span></div>
-    <nav><a className="wordmark" href="#top"><span className="mark">V</span><span>VERTICE<br /><em>THERMAL</em></span></a><div className={`navlinks ${menu ? 'show' : ''}`}><a href="#system">The system</a><a href="#team">Technicians</a><a href="#partners">For contractors</a><a href="#reviews">Field notes</a></div><button className="nav-cta" onClick={() => document.getElementById('partners')?.scrollIntoView({ behavior: 'smooth' })}>Book a survey <ArrowUpRight size={16} /></button><button className="menu" onClick={() => setMenu(!menu)} aria-label="Toggle navigation">{menu ? <X /> : <Menu />}</button></nav>
-    <section className="hero" id="top"><div className="hero-copy"><span className="eyebrow">PRECISION CLIMATE SYSTEMS / 2025</span><h1>Quiet power.<br /><i>Precisely</i> engineered.</h1><p>Architectural heat-pump systems for spaces where comfort, silence and considered detail are non-negotiable.</p><div className="hero-actions"><button className="button primary" onClick={() => document.getElementById('system')?.scrollIntoView({ behavior: 'smooth' })}>Explore the system <ArrowUpRight size={16} /></button><button className="text-button"><Play size={14} fill="currentColor" /> Watch the 90s film</button></div><div className="hero-meta"><div><strong>01</strong><span>Heat pump<br />redefined</span></div><div><strong>42</strong><span>dB at<br />1 metre</span></div><div><strong>A+++</strong><span>Seasonal<br />efficiency</span></div></div></div><div className="hero-visual"><Hero3D /></div></section>
-    <section className="marquee"><span>DESIGNED FOR THE ARCHITECTURE OF EVERYDAY LIFE</span><span>•</span><span>COMMISSIONED IN LONDON</span><span>•</span><span>BUILT FOR THE LONG TERM</span></section>
-    <section className="journey-section"><ServiceJourney3D /></section>
-    <section className="section system" id="system"><div className="section-intro" data-motion><span className="eyebrow">01 / THE SYSTEM</span><h2>Performance you<br /><i>don’t have to see.</i></h2><p>Every VERTICE system is commissioned as a whole: envelope, airflow, sound and the rhythm of the home considered together.</p><a className="arrow-link" href="#partners">View technical specification <ArrowUpRight size={16} /></a></div><div className="feature-list">{[['01', 'AeroBlade fan', 'Laminar airflow keeps the exterior unit calm — even at peak demand.'], ['02', 'Inverter intelligence', 'The compressor modulates in real time, using only the energy the room calls for.'], ['03', 'Copper core exchanger', 'Rapid thermal response, corrosion resistance and a 25-year serviceable architecture.']].map(([number, title, description]) => <div className="feature" data-motion key={number}><span className="feature-num">{number}</span><div><h3>{title}</h3><p>{description}</p></div><ChevronRight size={18} /></div>)}</div></section>
-    <section className="section team" id="team"><div className="team-header" data-motion><div><span className="eyebrow">02 / THE PEOPLE</span><h2>Technical minds.<br /><i>Human hands.</i></h2></div><p>Installation is where performance becomes personal. Our licensed technicians bring a commissioning mindset to every room, roof and return visit.</p></div><div className="team-grid">{[['LM', 'Luca Moretti', 'Lead commissioning engineer', 'MCS / NATE certified'], ['AN', 'Aisha Noor', 'Controls & diagnostics', 'CIBSE / Daikin accredited'], ['JW', 'James Wren', 'Service & aftercare', 'MCS / Daikin accredited'], ['JW', 'James Wren', 'Service & aftercare', 'MCS / F-Gas certified']].slice(0,3).map(([initials, name, role, certification]) => <article className="person" data-motion key={name}><div className="person-photo"><span>{initials}</span><div className="person-index">{certification}</div></div><div className="person-info"><h3>{name}</h3><p>{role}</p><ArrowUpRight size={16} /></div></article>)}</div></section>
-    <section className="partner-band" id="partners"><div className="partner-copy" data-motion><span className="eyebrow">03 / PARTNER WITH VERTICE</span><h2>A better margin<br /><i>for better work.</i></h2><p>Join the contractor network built for firms who care about the final 10%. We bring the system, the specification and the aftercare model. You bring the craft.</p><ul><li><Check size={15} /> Qualified lead flow, pre-scoped</li><li><Check size={15} /> White-label commissioning support</li><li><Check size={15} /> One predictable monthly retainer</li></ul></div><div className="calculator" data-motion data-parallax><div className="calc-top"><span>PARTNER MODEL / 2025</span><Gauge size={18} /></div><h3>Estimate your annual upside</h3><label>Active installations <strong>{monthly}</strong></label><input type="range" min="1" max="12" value={monthly} onChange={(event) => setMonthly(+event.target.value)} /><div className="range-labels"><span>1</span><span>12</span></div><div className="calc-total"><span>Estimated annual gross</span><strong>£{annual.toLocaleString()}</strong></div><div className="calc-detail"><span>Setup fees <b>£{(2500 * monthly).toLocaleString()}</b></span><span>Retainer value <b>£{(1000 * monthly * 12).toLocaleString()}</b></span></div><button className="button light">Request partner pack <ArrowUpRight size={16} /></button></div></section>
-    <section className="section reviews" id="reviews"><div className="reviews-left" data-motion><span className="eyebrow">04 / FIELD NOTES</span><h2>Verified in<br /><i>the real world.</i></h2><div className="review-rating"><strong>4.9</strong><span>★★★★★<small>128 verified installs</small></span></div></div><div className="review-log">{[['MAY 24, 2025', '“The first system we’ve installed that feels like part of the architecture.”', 'N. HART / RESIDENTIAL'], ['APR 18, 2025', '“Clear specification, immaculate commissioning, no callbacks.”', 'W. & S. BUILDING CO. / TRADE'], ['MAR 02, 2025', '“The house is warmer, quieter and our bills are finally predictable.”', 'E. CLARKE / HOMEOWNER']].map(([date, quote, author]) => <div className="review" data-motion key={date}><span className="review-date">{date}</span><p>{quote}</p><span className="review-author"><ShieldCheck size={13} /> {author}</span></div>)}</div></section>
-    <footer><a className="wordmark" href="#top"><span className="mark">V</span><span>VERTICE<br /><em>THERMAL</em></span></a><span>© 2025 VERTICE THERMAL SYSTEMS</span><span>PRIVACY / TERMS / INSTAGRAM</span></footer><MotionDirector /><Concierge />
+  const [partnerCount, setPartnerCount] = useState(3);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const setupTotal = partnerCount * 2500;
+  const monthlyTotal = partnerCount * 1000;
+  const firstYearTotal = setupTotal + monthlyTotal * 12;
+
+  const requestSurvey = () => {
+    setChatOpen(true);
+    setMenuOpen(false);
+  };
+
+  return <main className="min-h-screen bg-ink text-paper">
+    <div className="status-bar"><span><i className="status-indicator" /> RESIDENTIAL CLIMATE / ENGINEERED WITH INTENT</span><span className="status-right">THERMAL COMFORT, CONSIDERED <ArrowUpRight size={12} /></span></div>
+    <nav className="site-nav" aria-label="Main navigation">
+      <a className="brand" href="#top" aria-label="VERTICE THERMAL home"><span className="brand-symbol">V</span><span className="brand-name">VERTICE<small>THERMAL</small></span></a>
+      <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
+        <a onClick={() => setMenuOpen(false)} href="#system">The system</a>
+        <a onClick={() => setMenuOpen(false)} href="#team">Our approach</a>
+        <a onClick={() => setMenuOpen(false)} href="#partners">For contractors</a>
+        <a onClick={() => setMenuOpen(false)} href="#reviews">Service log</a>
+      </div>
+      <button className="nav-cta" onClick={requestSurvey}>Request a survey <ArrowUpRight size={15} /></button>
+      <button className="menu-toggle" onClick={() => setMenuOpen((value) => !value)} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
+    </nav>
+
+    <section className="hero" id="top">
+      <div className="hero-copy">
+        <span className="eyebrow">CLIMATE SYSTEMS / A CLOSER LOOK</span>
+        <h1>Comfort,<br /><i>quietly</i> perfected.</h1>
+        <p>Thoughtful heat-pump systems, considered as part of the architecture—not an afterthought outside it.</p>
+        <div className="hero-actions"><button className="button button-gold" onClick={() => document.getElementById('system')?.scrollIntoView({ behavior: 'smooth' })}>Explore the system <ArrowUpRight size={15} /></button><button className="quiet-link" onClick={requestSurvey}>Arrange a conversation <ArrowRight size={15} /></button></div>
+        <div className="hero-facts"><div><span>01</span><small>Inverter-led<br />performance</small></div><div><span>02</span><small>Designed for<br />quiet operation</small></div><div><span>03</span><small>Serviceable<br />by design</small></div></div>
+      </div>
+      <div className="hero-visual"><Hero3D /><div className="visual-label"><span>PRODUCT STUDY / OUTDOOR UNIT</span><span>INTERACTIVE 3D VIEW</span></div></div>
+      <a className="scroll-cue" href="#system"><span>SCROLL TO EXPLORE</span><ArrowDownRight size={15} /></a>
+    </section>
+
+    <section className="manifesto" aria-label="Design principle"><span>FORM FOLLOWS COMFORT</span><i /> <span>QUIETLY BUILT INTO THE HOME</span><i /> <span>DESIGNED FOR THE LONG VIEW</span></section>
+
+    <section className="section system-section" id="system">
+      <div className="section-heading" data-reveal><span className="eyebrow">01 / THE SYSTEM</span><h2>Engineering you<br /><i>feel, not hear.</i></h2><p>Every component has a role in the whole: steady output, clean airflow and a system that can be understood and serviced over time.</p></div>
+      <div className="feature-stack">
+        <article className="feature-row" data-reveal><span className="feature-index">01</span><div className="feature-icon"><Fan size={19} /></div><div><h3>AeroBlade fan</h3><p>Airflow shaped to move efficiently and keep the outdoor unit visually composed.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
+        <article className="feature-row" data-reveal><span className="feature-index">02</span><div className="feature-icon"><Snowflake size={19} /></div><div><h3>Inverter compressor</h3><p>Output modulates with demand instead of cycling at a single fixed rate.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
+        <article className="feature-row" data-reveal><span className="feature-index">03</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>Copper core exchanger</h3><p>A considered thermal pathway, designed for dependable service access.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
+        <div className="system-note"><ShieldCheck size={15} /><span>Performance and equipment selection depend on the property, climate and a proper site assessment.</span></div>
+      </div>
+    </section>
+
+    <section className="team-section" id="team">
+      <div className="team-intro" data-reveal><div><span className="eyebrow">02 / THE PEOPLE</span><h2>Good work begins<br /><i>with good questions.</i></h2></div><p>A responsible visit starts with listening, checking the property and matching the work to the right local specialist.</p></div>
+      <div className="service-cards">
+        <article className="service-card" data-reveal><span className="card-number">01 / ASSESS</span><div className="service-glyph"><MapPin size={21} /></div><h3>Survey &amp; sizing</h3><p>Understand the home, existing equipment and the comfort you want to achieve.</p><span className="card-rule" /></article>
+        <article className="service-card" data-reveal><span className="card-number">02 / INSTALL</span><div className="service-glyph"><Wrench size={21} /></div><h3>Installation &amp; commissioning</h3><p>Plan the system around access, airflow, controls and the character of the property.</p><span className="card-rule" /></article>
+        <article className="service-card" data-reveal><span className="card-number">03 / CARE</span><div className="service-glyph"><Clock3 size={21} /></div><h3>Service &amp; aftercare</h3><p>Keep the system understandable, maintainable and supported after handover.</p><span className="card-rule" /></article>
+      </div>
+      <div className="directory-note"><BadgeCheck size={16} /><p><strong>Technician directory</strong><br />Individual profiles are published only when licensing and service-area details have been verified. No technician credentials are represented here without supporting records.</p><button onClick={requestSurvey}>Ask about a visit <ArrowUpRight size={14} /></button></div>
+    </section>
+
+    <section className="partner-section" id="partners">
+      <div className="partner-copy" data-reveal><span className="eyebrow">03 / FOR CONTRACTORS</span><h2>Build a better<br /><i>service model.</i></h2><p>A clear setup and predictable recurring support model for contractors who want a considered customer experience from first survey through aftercare.</p><ul><li><Check size={15} /> A defined setup engagement</li><li><Check size={15} /> A consistent monthly retainer</li><li><Check size={15} /> A service-led homeowner journey</li></ul><button className="partner-link" onClick={requestSurvey}>Discuss partnership <ArrowUpRight size={15} /></button></div>
+      <div className="calculator glass-panel" data-reveal>
+        <div className="calc-top"><span>PARTNER REVENUE MODEL</span><span className="calc-mark">V / 01</span></div>
+        <h3>Estimate contracted revenue</h3>
+        <label className="range-label" htmlFor="partner-count">Contractor accounts <strong>{partnerCount}</strong></label>
+        <input id="partner-count" type="range" min="1" max="12" step="1" value={partnerCount} onChange={(event) => setPartnerCount(Number(event.target.value))} />
+        <div className="range-ends"><span>1 account</span><span>12 accounts</span></div>
+        <div className="calc-primary"><span>Estimated first-year gross</span><strong>${firstYearTotal.toLocaleString('en-US')}</strong></div>
+        <div className="calc-breakdown"><div><span>One-time setup</span><b>${setupTotal.toLocaleString('en-US')}</b></div><div><span>Monthly retainer</span><b>${monthlyTotal.toLocaleString('en-US')} / mo</b></div></div>
+        <p className="calc-disclaimer">Illustrative contracted revenue before delivery costs. Assumes each account pays $2,500 setup and $1,000 per month for 12 months.</p>
+        <button className="button button-light" onClick={requestSurvey}>Request partnership details <ArrowUpRight size={15} /></button>
+      </div>
+    </section>
+
+    <section className="reviews-section" id="reviews">
+      <div className="reviews-intro" data-reveal><span className="eyebrow">04 / SERVICE LOG</span><h2>Proof should<br /><i>be verifiable.</i></h2><p>Every published review should belong to a real visit and a real homeowner.</p></div>
+      <div className="review-empty glass-panel" data-reveal><span className="review-seal"><ShieldCheck size={23} /></span><span className="eyebrow">VERIFIED SERVICE NOTES</span><h3>Only the real thing.</h3><p>Reviews will appear here once completed service records and homeowner permission are confirmed. No testimonial or rating is invented for this page.</p><button onClick={requestSurvey}>Start a service request <ArrowUpRight size={15} /></button></div>
+    </section>
+
+    <section className="closing-band"><div><span className="eyebrow">A MORE CONSIDERED KIND OF COMFORT</span><h2>Let’s start with<br /><i>your home.</i></h2></div><button className="button button-gold" onClick={requestSurvey}>Request a home survey <ArrowUpRight size={15} /></button></section>
+
+    <footer className="site-footer"><a className="brand" href="#top"><span className="brand-symbol">V</span><span className="brand-name">VERTICE<small>THERMAL</small></span></a><span className="footer-note">CLIMATE SYSTEMS / ARCHITECTURAL COMFORT</span><button onClick={requestSurvey}>Talk to Elena <ArrowUpRight size={14} /></button></footer>
+
+    <MotionDirector />
+    <Concierge open={chatOpen} setOpen={setChatOpen} />
   </main>;
 }
