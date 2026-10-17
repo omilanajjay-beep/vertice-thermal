@@ -117,6 +117,7 @@ export default function Hero3D() {
   const targetRef = useRef(new THREE.Vector3(0, 0.2, 0.05));
   const cameraGoalRef = useRef(new THREE.Vector3(3.6, 2.55, 7.35));
   const cameraTweenRef = useRef(null);
+  const renderRef = useRef(() => {});
   const pointerRef = useRef(new THREE.Vector2());
   const hotspotRefs = useRef({});
   const reducedMotionRef = useRef(false);
@@ -128,7 +129,8 @@ export default function Hero3D() {
     if (!mountRef.current) return undefined;
     const mount = mountRef.current;
     const mobile = window.matchMedia('(max-width: 680px), (pointer: coarse)').matches;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let reducedMotion = reducedMotionQuery.matches;
     reducedMotionRef.current = reducedMotion;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#171818');
@@ -305,6 +307,7 @@ export default function Hero3D() {
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      renderRef.current();
     };
     resize();
     const onResize = () => resize();
@@ -322,11 +325,15 @@ export default function Hero3D() {
     interactionRoot.addEventListener('pointerleave', onPointerLeave, { passive: true });
 
     let frame = 0;
+    let running = false;
+    let disposed = false;
+    let lastRender = 0;
     const clock = new THREE.Clock();
     const desiredCamera = new THREE.Vector3();
     const desiredLook = new THREE.Vector3();
     const projectedHotspot = new THREE.Vector3();
-    const animate = () => {
+    const renderFrame = (now = performance.now()) => {
+      if (disposed) return;
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
       const pointer = pointerRef.current;
@@ -366,16 +373,73 @@ export default function Hero3D() {
         }
       });
       renderer.render(scene, camera);
-      frame = requestAnimationFrame(animate);
+      lastRender = now;
     };
-    animate();
+    renderRef.current = renderFrame;
+
+    const animate = (now) => {
+      if (disposed || !running) return;
+      frame = requestAnimationFrame(animate);
+      if (mobile && now - lastRender < 1000 / 30) return;
+      renderFrame(now);
+    };
+    const startRendering = () => {
+      if (disposed || running) return;
+      running = true;
+      clock.start();
+      renderFrame();
+      if (!reducedMotion) frame = requestAnimationFrame(animate);
+    };
+    const stopRendering = () => {
+      running = false;
+      cancelAnimationFrame(frame);
+      frame = 0;
+      clock.stop();
+    };
+    const isVisible = () => document.visibilityState === 'visible';
+    const updateRendering = () => {
+      if (isVisible() && mountIsVisible) {
+        if (reducedMotion) {
+          stopRendering();
+          renderFrame();
+        } else startRendering();
+      } else stopRendering();
+    };
+    let mountIsVisible = true;
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      mountIsVisible = entry.isIntersecting;
+      updateRendering();
+    }, { threshold: 0.01 });
+    visibilityObserver.observe(mount);
+    const onVisibilityChange = () => updateRendering();
+    const onReducedMotionChange = (event) => {
+      reducedMotion = event.matches;
+      reducedMotionRef.current = reducedMotion;
+      cameraTweenRef.current?.kill();
+      cameraTweenRef.current = null;
+      if (reducedMotion) {
+        camera.position.copy(cameraGoalRef.current);
+        camera.lookAt(targetRef.current);
+      }
+      updateRendering();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    if (reducedMotionQuery.addEventListener) reducedMotionQuery.addEventListener('change', onReducedMotionChange);
+    else reducedMotionQuery.addListener?.(onReducedMotionChange);
+    updateRendering();
 
     return () => {
+      disposed = true;
+      stopRendering();
       window.removeEventListener('resize', onResize);
       interactionRoot.removeEventListener('pointermove', onPointerMove);
       interactionRoot.removeEventListener('pointerleave', onPointerLeave);
-      cancelAnimationFrame(frame);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (reducedMotionQuery.removeEventListener) reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
+      else reducedMotionQuery.removeListener?.(onReducedMotionChange);
+      visibilityObserver.disconnect();
       cameraTweenRef.current?.kill();
+      renderRef.current = () => {};
       scene.traverse((object) => {
         if (object.geometry) object.geometry.dispose();
         if (object.material) {
@@ -403,6 +467,9 @@ export default function Hero3D() {
     if (reducedMotionRef.current) {
       cameraGoalRef.current.set(...hotspot.camera);
       targetRef.current.set(...hotspot.target);
+      camera.position.copy(cameraGoalRef.current);
+      camera.lookAt(targetRef.current);
+      renderRef.current();
       return;
     }
     cameraTweenRef.current = gsap.timeline({ defaults: { duration: 1.35, ease: 'power3.inOut' } })

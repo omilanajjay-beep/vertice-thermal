@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ArrowDownRight,
   ArrowRight,
@@ -20,7 +20,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react';
-import { gsap } from 'gsap';
+import SiteMotion from './components/SiteMotion';
 import Hero3D from './components/Hero3D';
 
 type Role = 'assistant' | 'user';
@@ -63,29 +63,6 @@ function formatSlotTime(value: string, timeZone: string) {
 function formatSlotDay(value: string, timeZone: string) {
   const [year, month, day] = value.split('-').map(Number);
   return new Intl.DateTimeFormat('en', { weekday: 'short', month: 'short', day: 'numeric', timeZone }).format(new Date(Date.UTC(year, month - 1, day, 12)));
-}
-
-function MotionDirector() {
-  useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) return;
-    const intro = gsap.context(() => {
-      gsap.fromTo('.hero-copy > *', { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.09, ease: 'power3.out', delay: 0.12 });
-      gsap.fromTo('.hero-visual', { opacity: 0, scale: 1.015 }, { opacity: 1, scale: 1, duration: 1.25, ease: 'power3.out' });
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12 });
-      document.querySelectorAll('[data-reveal]').forEach((element) => observer.observe(element));
-      return () => observer.disconnect();
-    });
-    return () => intro.revert();
-  }, []);
-  return null;
 }
 
 function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) => void }) {
@@ -263,14 +240,14 @@ export default function Home() {
     <div className="status-bar"><span><i className="status-indicator" /> RESIDENTIAL CLIMATE / ENGINEERED WITH INTENT</span><span className="status-right">THERMAL COMFORT, CONSIDERED <ArrowUpRight size={12} /></span></div>
     <nav className="site-nav" aria-label="Main navigation">
       <a className="brand" href="#top" aria-label="VERTICE THERMAL home"><span className="brand-symbol">V</span><span className="brand-name">VERTICE<small>THERMAL</small></span></a>
-      <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
+      <div id="primary-links" className={`nav-links ${menuOpen ? 'open' : ''}`}>
         <a onClick={() => setMenuOpen(false)} href="#system">The system</a>
         <a onClick={() => setMenuOpen(false)} href="#team">Our approach</a>
         <a onClick={() => setMenuOpen(false)} href="#partners">For contractors</a>
         <a onClick={() => setMenuOpen(false)} href="#reviews">Service log</a>
       </div>
       <button className="nav-cta" onClick={requestSurvey}>Request a survey <ArrowUpRight size={15} /></button>
-      <button className="menu-toggle" onClick={() => setMenuOpen((value) => !value)} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
+      <button className="menu-toggle" aria-expanded={menuOpen} aria-controls="primary-links" onClick={() => setMenuOpen((value) => !value)} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
     </nav>
 
     <section className="hero" id="top">
@@ -278,7 +255,7 @@ export default function Home() {
         <span className="eyebrow">CLIMATE SYSTEMS / A CLOSER LOOK</span>
         <h1>Comfort,<br /><i>quietly</i> perfected.</h1>
         <p>Thoughtful heat-pump systems, considered as part of the architecture—not an afterthought outside it.</p>
-        <div className="hero-actions"><button className="button button-gold" onClick={() => document.getElementById('system')?.scrollIntoView({ behavior: 'smooth' })}>Explore the system <ArrowUpRight size={15} /></button><button className="quiet-link" onClick={requestSurvey}>Arrange a conversation <ArrowRight size={15} /></button></div>
+        <div className="hero-actions"><button className="button button-gold" onClick={() => document.getElementById('system')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}>Explore the system <ArrowUpRight size={15} /></button><button className="quiet-link" onClick={requestSurvey}>Arrange a conversation <ArrowRight size={15} /></button></div>
         <div className="hero-facts"><div><span>01</span><small>Inverter-led<br />performance</small></div><div><span>02</span><small>Designed for<br />quiet operation</small></div><div><span>03</span><small>Serviceable<br />by design</small></div></div>
       </div>
       <div className="hero-visual"><Hero3D /><div className="visual-label"><span>PRODUCT STUDY / OUTDOOR UNIT</span><span>INTERACTIVE 3D VIEW</span></div></div>
@@ -300,16 +277,16 @@ export default function Home() {
     <section className="team-section" id="team">
       <div className="team-intro" data-reveal><div><span className="eyebrow">02 / THE PEOPLE</span><h2>Good work begins<br /><i>with good questions.</i></h2></div><p>A responsible visit starts with listening, checking the property and matching the work to the right local specialist.</p></div>
       <div className="service-cards">
-        <article className="service-card" data-reveal><span className="card-number">01 / ASSESS</span><div className="service-glyph"><MapPin size={21} /></div><h3>Survey &amp; sizing</h3><p>Understand the home, existing equipment and the comfort you want to achieve.</p><span className="card-rule" /></article>
-        <article className="service-card" data-reveal><span className="card-number">02 / INSTALL</span><div className="service-glyph"><Wrench size={21} /></div><h3>Installation &amp; commissioning</h3><p>Plan the system around access, airflow, controls and the character of the property.</p><span className="card-rule" /></article>
-        <article className="service-card" data-reveal><span className="card-number">03 / CARE</span><div className="service-glyph"><Clock3 size={21} /></div><h3>Service &amp; aftercare</h3><p>Keep the system understandable, maintainable and supported after handover.</p><span className="card-rule" /></article>
+        <article className="service-card" data-reveal data-depth><span className="card-number">01 / ASSESS</span><div className="service-glyph"><MapPin size={21} /></div><h3>Survey &amp; sizing</h3><p>Understand the home, existing equipment and the comfort you want to achieve.</p><span className="card-rule" /></article>
+        <article className="service-card" data-reveal data-depth><span className="card-number">02 / INSTALL</span><div className="service-glyph"><Wrench size={21} /></div><h3>Installation &amp; commissioning</h3><p>Plan the system around access, airflow, controls and the character of the property.</p><span className="card-rule" /></article>
+        <article className="service-card" data-reveal data-depth><span className="card-number">03 / CARE</span><div className="service-glyph"><Clock3 size={21} /></div><h3>Service &amp; aftercare</h3><p>Keep the system understandable, maintainable and supported after handover.</p><span className="card-rule" /></article>
       </div>
-      <div className="directory-note"><BadgeCheck size={16} /><p><strong>Technician directory</strong><br />Individual profiles are published only when licensing and service-area details have been verified. No technician credentials are represented here without supporting records.</p><button onClick={requestSurvey}>Ask about a visit <ArrowUpRight size={14} /></button></div>
+      <div className="directory-note" data-reveal><BadgeCheck size={16} /><p><strong>Technician directory</strong><br />Individual profiles are published only when licensing and service-area details have been verified. No technician credentials are represented here without supporting records.</p><button onClick={requestSurvey}>Ask about a visit <ArrowUpRight size={14} /></button></div>
     </section>
 
     <section className="partner-section" id="partners">
       <div className="partner-copy" data-reveal><span className="eyebrow">03 / FOR CONTRACTORS</span><h2>Build a better<br /><i>service model.</i></h2><p>A clear setup and predictable recurring support model for contractors who want a considered customer experience from first survey through aftercare.</p><ul><li><Check size={15} /> A defined setup engagement</li><li><Check size={15} /> A consistent monthly retainer</li><li><Check size={15} /> A service-led homeowner journey</li></ul><button className="partner-link" onClick={requestSurvey}>Discuss partnership <ArrowUpRight size={15} /></button></div>
-      <div className="calculator glass-panel" data-reveal>
+      <div className="calculator glass-panel" data-reveal data-depth>
         <div className="calc-top"><span>PARTNER REVENUE MODEL</span><span className="calc-mark">V / 01</span></div>
         <h3>Estimate contracted revenue</h3>
         <label className="range-label" htmlFor="partner-count">Contractor accounts <strong>{partnerCount}</strong></label>
@@ -324,14 +301,14 @@ export default function Home() {
 
     <section className="reviews-section" id="reviews">
       <div className="reviews-intro" data-reveal><span className="eyebrow">04 / SERVICE LOG</span><h2>Proof should<br /><i>be verifiable.</i></h2><p>Every published review should belong to a real visit and a real homeowner.</p></div>
-      <div className="review-empty glass-panel" data-reveal><span className="review-seal"><ShieldCheck size={23} /></span><span className="eyebrow">VERIFIED SERVICE NOTES</span><h3>Only the real thing.</h3><p>Reviews will appear here once completed service records and homeowner permission are confirmed. No testimonial or rating is invented for this page.</p><button onClick={requestSurvey}>Start a service request <ArrowUpRight size={15} /></button></div>
+      <div className="review-empty glass-panel" data-reveal data-depth><span className="review-seal"><ShieldCheck size={23} /></span><span className="eyebrow">VERIFIED SERVICE NOTES</span><h3>Only the real thing.</h3><p>Reviews will appear here once completed service records and homeowner permission are confirmed. No testimonial or rating is invented for this page.</p><button onClick={requestSurvey}>Start a service request <ArrowUpRight size={15} /></button></div>
     </section>
 
-    <section className="closing-band"><div><span className="eyebrow">A MORE CONSIDERED KIND OF COMFORT</span><h2>Let’s start with<br /><i>your home.</i></h2></div><button className="button button-gold" onClick={requestSurvey}>Request a home survey <ArrowUpRight size={15} /></button></section>
+    <section className="closing-band" data-reveal><div><span className="eyebrow">A MORE CONSIDERED KIND OF COMFORT</span><h2>Let’s start with<br /><i>your home.</i></h2></div><button className="button button-gold" onClick={requestSurvey}>Request a home survey <ArrowUpRight size={15} /></button></section>
 
     <footer className="site-footer"><a className="brand" href="#top"><span className="brand-symbol">V</span><span className="brand-name">VERTICE<small>THERMAL</small></span></a><span className="footer-note">CLIMATE SYSTEMS / ARCHITECTURAL COMFORT</span><button onClick={requestSurvey}>Talk to Elena <ArrowUpRight size={14} /></button></footer>
 
-    <MotionDirector />
+    <SiteMotion />
     <Concierge open={chatOpen} setOpen={setChatOpen} />
   </main>;
 }
