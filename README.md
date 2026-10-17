@@ -12,17 +12,25 @@ npm run dev
 
 The front end runs without credentials. Live appointment availability and booking are enabled only after the server-side integrations are configured. No secret belongs in client-side code or in Git.
 
-## Required production environment
+## Production environment
 
-- `GROQ_API_KEY` — optional for the intake fallback; used with `llama-3.3-70b-versatile` to acknowledge the final HVAC concern. Customer names, phone numbers, email addresses and property addresses are not sent to Groq.
-- `CAL_API_KEY` — required for live slots and booking.
-- `CAL_EVENT_TYPE_ID`, or `CAL_EVENT_TYPE_SLUG` plus `CAL_USERNAME` or `CAL_TEAM_SLUG`; optionally `CAL_ORGANIZATION_SLUG`.
-- `SENDGRID_API_KEY` — required for booking confirmations.
-- `SENDGRID_FROM_EMAIL` — verified sender address (the requested default is `omilanajjay@gmail.com`).
-- `SENDGRID_TECH_EMAIL` — on-call technician/dispatch recipient.
-- `NEXT_PUBLIC_SITE_URL` — optional canonical URL for metadata.
+Set values in the hosting provider's encrypted environment-variable settings. Do not commit `.env.local` or actual API keys.
 
-Add these in the hosting provider's encrypted environment-variable settings for Production, Preview and Development as appropriate. Do not commit `.env.local` or any actual API key. The app will not create a booking unless it can verify the live Cal.com slot and has the email configuration needed to notify both recipients.
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `GROQ_API_KEY` | Optional | Calls `llama-3.3-70b-versatile` for a short acknowledgement of the final HVAC concern; customer contact/address details are not sent to Groq. |
+| `CAL_API_KEY` | Yes for booking | Cal.com API access for live availability and booking. |
+| `CAL_EVENT_TYPE_ID` | One event selector required | Cal.com event type ID. Use this **or** configure the slug selector below. |
+| `CAL_EVENT_TYPE_SLUG` | Alternative event selector | Use with `CAL_USERNAME` or `CAL_TEAM_SLUG`; optionally include `CAL_ORGANIZATION_SLUG`. |
+| `CAL_USERNAME` | Conditional | Required with `CAL_EVENT_TYPE_SLUG` when using a personal event. |
+| `CAL_TEAM_SLUG` | Conditional | Use with `CAL_EVENT_TYPE_SLUG` when using a team event. |
+| `CAL_ORGANIZATION_SLUG` | Optional | Organization identifier for a Cal.com organization event. |
+| `SENDGRID_API_KEY` | Yes for booking confirmation | Sends the homeowner and dispatch emails after a confirmed appointment. |
+| `SENDGRID_FROM_EMAIL` | Yes for booking email | Verified SendGrid sender; requested default: `omilanajjay@gmail.com`. |
+| `SENDGRID_TECH_EMAIL` | Yes for booking email | On-call technician/dispatch recipient. |
+| `NEXT_PUBLIC_SITE_URL` | Optional | Canonical public site origin for metadata, e.g. the final Netlify site URL. |
+
+The live booking route verifies Cal.com availability and requires configured Cal.com and SendGrid values before it can create a booking. Until configured, availability and booking routes fail closed; the front-end site remains usable.
 
 ## Backend routes
 
@@ -32,6 +40,6 @@ Add these in the hosting provider's encrypted environment-variable settings for 
 
 The visitor's intake details remain in the browser until they confirm an appointment. Once confirmed, booking data is sent to Cal.com and the two transactional emails are sent through SendGrid.
 
-## Deployment
+## Netlify deployment
 
-The repository is configured for Vercel's standard Next.js build. Connect the private GitHub repository to the Vercel project and deploy the `main` branch. Add the environment variables above before enabling live appointment booking.
+The site uses Next.js App Router, which Netlify supports through its automatically managed OpenNext adapter. Import the private repository `https://github.com/omilanajjay-beep/vertice-thermal` and deploy the `main` branch. Use the **Next.js** framework preset, build command `npm run build`, and Node.js 22. Leave the publish directory to Netlify's automatic Next.js adapter detection; do not force a static export or a custom publish directory. Add the environment variables above in Netlify's encrypted site environment settings, then deploy. Set `NEXT_PUBLIC_SITE_URL` to the assigned production origin after Netlify creates the site and redeploy if necessary.
