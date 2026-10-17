@@ -18,7 +18,7 @@ Set values in the hosting provider's encrypted environment-variable settings. Do
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `GROQ_API_KEY` | Optional | Calls `llama-3.3-70b-versatile` for a short acknowledgement of the final HVAC concern; customer contact/address details are not sent to Groq. |
+| `GROQ_API_KEY` | Optional | Calls Groq's `openai/gpt-oss-120b` for a short acknowledgement of the final HVAC concern; customer contact/address details are not sent to the model. |
 | `CAL_API_KEY` | Yes for booking | Cal.com API access for live availability and booking. |
 | `CAL_EVENT_TYPE_ID` | One event selector required | Cal.com event type ID. Use this **or** configure the slug selector below. |
 | `CAL_EVENT_TYPE_SLUG` | Alternative event selector | Use with `CAL_USERNAME` or `CAL_TEAM_SLUG`; optionally include `CAL_ORGANIZATION_SLUG`. |
@@ -34,7 +34,7 @@ The live booking route verifies Cal.com availability and requires configured Cal
 
 ## Backend routes
 
-- `POST /api/concierge` — validates one requested field at a time; uses the requested Groq model only to acknowledge a locally classified HVAC issue category.
+- `POST /api/concierge` — validates one requested field at a time; uses Groq's `openai/gpt-oss-120b` only to acknowledge a locally classified HVAC issue category.
 - `GET /api/slots?start=YYYY-MM-DD&end=YYYY-MM-DD&timeZone=...` — returns live availability from Cal.com.
 - `POST /api/book` — re-checks the selected slot, creates the Cal.com booking, then sends distinct homeowner and technician confirmations through SendGrid.
 
