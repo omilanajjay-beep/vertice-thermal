@@ -6,7 +6,7 @@ const Module = require('node:module');
 const ts = require('typescript');
 
 // Exercise the actual client component without a browser or external services.
-function createClient() {
+function createClient(initialOpen = true) {
   const values = [];
   let cursor = 0;
   const react = {
@@ -39,7 +39,8 @@ function createClient() {
     mod._compile(code, file);
     component = mod.exports.Concierge;
   } finally { Module._load = original; }
-  return () => { cursor = 0; return component({ open: true, setOpen() {} }); };
+  let open = initialOpen;
+  return () => { cursor = 0; return component({ open, setOpen(next) { open = next; } }); };
 }
 function find(tree, predicate) {
   if (!tree || typeof tree !== 'object') return null;
@@ -61,6 +62,19 @@ async function submit(render, text) {
 const reply = (body, status = 200) => ({ ok: status < 400, status, async json() { return body; } });
 
 test.afterEach(() => { delete global.fetch; });
+
+test('icon-only launcher has an accessible label and opens the existing chat', () => {
+  const render = createClient(false);
+  const launcher = byLabel(render(), 'Open chat');
+  assert.ok(launcher);
+  assert.equal(launcher.type, 'button');
+  assert.equal(launcher.props.children.type, 'MessageCircle');
+  assert.equal(launcher.props.children.props['aria-hidden'], 'true');
+  launcher.props.onClick();
+  assert.ok(byLabel(render(), 'Elena concierge chat'));
+  byLabel(render(), 'Close chat').props.onClick();
+  assert.ok(byLabel(render(), 'Open chat'));
+});
 
 test('greeting does not advance, and canonical name reaches booking rather than raw introduction', async () => {
   const render = createClient();

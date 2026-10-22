@@ -161,11 +161,8 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
   };
 
   return <>
-    {!open && <button className="chat-launcher" onClick={() => setOpen(true)} aria-label="Open Elena, the HVAC dispatch concierge">
-      <span className="launcher-status" aria-hidden="true" />
-      <MessageCircle size={17} strokeWidth={1.7} />
-      <span>Speak with Elena</span>
-      <ArrowUpRight size={15} className="launcher-arrow" />
+    {!open && <button type="button" className="chat-launcher" onClick={() => setOpen(true)} aria-label="Open chat" title="Open chat">
+      <MessageCircle size={25} strokeWidth={1.7} aria-hidden="true" />
     </button>}
     {open && <aside className="chat-drawer" aria-label="Elena concierge chat">
       <header className="chat-header">
