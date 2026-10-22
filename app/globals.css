@@ -197,6 +197,9 @@ input[type='range']::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
 .chat-footnote { margin: 0; padding: 9px 16px 12px; color: #77756f; font-size: 8px; line-height: 1.5; }
 .honeypot { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; }
 .appointment-panel { margin-top: 7px; padding: 14px 13px; border: 1px solid rgba(197,168,128,.27); background: rgba(197,168,128,.035); }
+.booking-name { display: grid; gap: 6px; margin-bottom: 13px; color: var(--muted); font-size: 10px; }
+.booking-name input { width: 100%; min-width: 0; padding: 9px; border: 1px solid var(--line); background: var(--ink); color: var(--paper); font: inherit; }
+.booking-name input:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
 .appointment-title { margin-bottom: 13px; display: flex; align-items: center; gap: 8px; color: var(--gold); font: 8px var(--mono); letter-spacing: .12em; }
 .slot-day { margin: 12px 0 13px; }
 .slot-day-label { display: block; margin-bottom: 7px; color: var(--paper); font: 9px var(--mono); }

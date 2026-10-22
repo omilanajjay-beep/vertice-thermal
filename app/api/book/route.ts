@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { bookingEventIdentity, fetchCalSlots, getCalConfig, validTimeZone } from '../../lib/cal';
+import { normalizeName } from '../../lib/intake';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,17 +47,23 @@ export async function POST(request: Request) {
   if (raw.length > 12000) return NextResponse.json({ error: 'Request is too large.' }, { status: 413 });
   let body: { start?: unknown; timeZone?: unknown; attendee?: Attendee; website?: unknown };
   try { body = JSON.parse(raw); } catch { return NextResponse.json({ error: 'Please choose a valid appointment time.' }, { status: 400 }); }
+  if (!body || typeof body !== 'object' || Array.isArray(body) || !body.attendee || typeof body.attendee !== 'object' || Array.isArray(body.attendee)) {
+    return NextResponse.json({ error: 'Please complete your appointment details.' }, { status: 400 });
+  }
   if (typeof body.website === 'string' && body.website.trim()) return NextResponse.json({ error: 'Request not accepted.' }, { status: 400 });
   const start = clean(body.start, 80);
   const startTime = Date.parse(start);
   const timeZone = clean(body.timeZone, 80) || 'UTC';
   const attendee = body.attendee ?? {};
-  const name = clean(attendee.name, 80);
+  const name = normalizeName(attendee.name);
+  if (!name || name.length > 80) {
+    return NextResponse.json({ error: 'What name should appear on your appointment? Please enter your name, rather than a greeting.' }, { status: 422 });
+  }
   const phone = clean(attendee.phone, 40);
   const email = clean(attendee.email, 254);
   const address = clean(attendee.address, 240);
   const problem = clean(attendee.problem, 800);
-  if (!start || !Number.isFinite(startTime) || startTime <= Date.now() || !validTimeZone(timeZone) || name.length < 2 || phone.replace(/\D/g, '').length < 7 || !emailPattern.test(email) || address.length < 5 || problem.length < 8) {
+  if (!start || !Number.isFinite(startTime) || startTime <= Date.now() || !validTimeZone(timeZone) || phone.replace(/\D/g, '').length < 7 || !emailPattern.test(email) || address.length < 5 || problem.length < 8) {
     return NextResponse.json({ error: 'Please complete each requested detail and choose a valid appointment time.' }, { status: 422 });
   }
 

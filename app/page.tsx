@@ -30,13 +30,6 @@ type Intake = Record<IntakeStep, string>;
 type AvailableSlot = { start: string; end?: string; date: string };
 
 const intakeFields: IntakeStep[] = ['name', 'phone', 'email', 'address', 'problem'];
-const questions = [
-  'What name should I use for you?',
-  'What is the best phone number to reach you?',
-  'Which email address should we use for your appointment details?',
-  'What is the property address for the visit?',
-  'How would you describe the heating or cooling issue?',
-];
 const emptyIntake: Intake = { name: '', phone: '', email: '', address: '', problem: '' };
 
 function localDateInZone(date: Date, timeZone: string) {
@@ -67,7 +60,7 @@ function formatSlotDay(value: string, timeZone: string) {
 
 function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', text: 'Hello, I’m Elena, the VERTICE dispatch concierge. What name should I use for you?' },
+    { role: 'assistant', text: 'Hi, I’m Elena, VERTICE’s virtual dispatch assistant. I can help arrange an HVAC visit. What’s your name?' },
   ]);
   const [intake, setIntake] = useState<Intake>(emptyIntake);
   const [step, setStep] = useState(0);
@@ -86,15 +79,6 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
     days[slot.date].push(slot);
     return days;
   }, {}), [slots]);
-
-  const validate = (field: IntakeStep, value: string) => {
-    if (field === 'name' && value.trim().length < 2) return 'Please enter at least two characters for your name.';
-    if (field === 'phone' && value.replace(/\D/g, '').length < 7) return 'Please enter a phone number with at least seven digits.';
-    if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
-    if (field === 'address' && value.trim().length < 5) return 'Please include the street and area for the property.';
-    if (field === 'problem' && value.trim().length < 8) return 'Please share a little more about what the system is doing.';
-    return '';
-  };
 
   const loadSlots = async () => {
     setSlotUnavailable(false);
@@ -116,15 +100,6 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
     const answer = input.trim();
     if (!answer || busy || step >= intakeFields.length) return;
     const field = intakeFields[step];
-    const validation = validate(field, answer);
-    if (validation) {
-      setMessages((current) => [...current, { role: 'assistant', text: validation }]);
-      setInput('');
-      return;
-    }
-
-    const nextIntake = { ...intake, [field]: answer };
-    setIntake(nextIntake);
     const withUser: ChatMessage[] = [...messages, { role: 'user', text: answer }];
     setMessages(withUser);
     setInput('');
@@ -134,21 +109,23 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
       const response = await fetch('/api/concierge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: field, answer, website: honeypot }),
+        body: JSON.stringify({ step: field, answer, completedFields: intakeFields.slice(0, step), website: honeypot }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'I could not process that just now. Please try again.');
-      const nextMessages: ChatMessage[] = [...withUser, { role: 'assistant', text: data.reply || 'Thank you. I have that detail.' }];
+      if (typeof data.reply !== 'string' || typeof data.accepted !== 'boolean' || (data.accepted && typeof data.value !== 'string')) {
+        throw new Error('I couldn’t save that detail. Could you try again?');
+      }
+      const nextMessages: ChatMessage[] = [...withUser, { role: 'assistant', text: data.reply }];
+      setMessages(nextMessages);
+      if (!data.accepted) return;
+      setIntake((current) => ({ ...current, [field]: data.value }));
       if (data.complete) {
         setStep(intakeFields.length);
-        setMessages(nextMessages);
-        setBusy(false);
         await loadSlots();
         return;
       }
-      const nextStep = step + 1;
-      setStep(nextStep);
-      setMessages([...nextMessages, { role: 'assistant', text: data.nextQuestion || questions[nextStep] }]);
+      setStep(step + 1);
     } catch (error) {
       setMessages([...withUser, { role: 'assistant', text: error instanceof Error ? error.message : 'Please try again in a moment.' }]);
     } finally {
@@ -201,6 +178,9 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
         {busy && <div className="chat-bubble assistant typing"><span /><span /><span /></div>}
         {step === intakeFields.length && !busy && !booked && <div className="appointment-panel">
           <div className="appointment-title"><CalendarDays size={15} /><span>AVAILABLE VISIT TIMES</span></div>
+          <label className="booking-name">Guest name
+            <input value={intake.name} onChange={(event) => setIntake((current) => ({ ...current, name: event.target.value }))} maxLength={80} autoComplete="name" aria-label="Guest name for your appointment" />
+          </label>
           {slotUnavailable ? <p className="slot-empty">Live appointment times are not available right now. Please try again later.</p> : <>
             {Object.entries(grouped).map(([date, daySlots]) => <div className="slot-day" key={date}>
               <span className="slot-day-label">{formatSlotDay(date, timeZone)}</span>
@@ -218,7 +198,7 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
         <input value={input} onChange={(event) => setInput(event.target.value)} maxLength={step === 4 ? 800 : 240} placeholder={busy ? 'Elena is replying…' : 'Write a reply'} aria-label="Your reply" disabled={busy} />
         <button type="submit" disabled={busy || !input.trim()} aria-label="Send reply"><Send size={16} /></button>
       </form>}
-      <p className="chat-footnote">One detail at a time. Your contact details are used to arrange the requested visit.</p>
+      <p className="chat-footnote">Your contact details are used to arrange your visit. You can check your guest name before confirming.</p>
     </aside>}
   </>;
 }

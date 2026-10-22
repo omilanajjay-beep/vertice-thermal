@@ -11,6 +11,17 @@ const routeCode = ts.transpileModule(routeSource, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   fileName: routePath,
 }).outputText;
+const intakePath = path.resolve(__dirname, '../app/lib/intake.ts');
+function loadIntake() {
+  const mod = new Module(intakePath, module);
+  mod.filename = intakePath;
+  mod.paths = Module._nodeModulePaths(path.dirname(intakePath));
+  mod._compile(ts.transpileModule(fs.readFileSync(intakePath, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    fileName: intakePath,
+  }).outputText, intakePath);
+  return mod.exports;
+}
 
 let liveSlots = [];
 const calConfig = {
@@ -36,6 +47,7 @@ function loadRoute() {
   Module._load = function mockedLoad(request, parent, isMain) {
     if (request === 'next/server') return { NextResponse: NextResponseMock };
     if (request === '../../lib/cal' && parent && parent.filename === routePath) return calMock;
+    if (request === '../../lib/intake' && parent && parent.filename === routePath) return loadIntake();
     return originalLoad.call(this, request, parent, isMain);
   };
   try {
@@ -165,4 +177,30 @@ test('Cal booking failure does not send email', async () => {
   assert.equal(result.status, 502);
   assert.equal(fetchCalls.filter((call) => call.url.includes('/bookings')).length, 1);
   assert.equal(fetchCalls.filter((call) => call.url.includes('sendgrid.com')).length, 0);
+});
+
+test('greetings and non-names cannot create a booking or send email', async (t) => {
+  for (const name of ['Hi', 'hello!', 'Hey there', 'Good morning', 'How are you?', 'I need a booking', '', 'A'.repeat(81)]) {
+    await t.test(name || 'empty name', async () => {
+      const start = setup();
+      const result = await POST(requestFor(start, validAttendee({ name })));
+      assert.equal(result.status, 422);
+      assert.equal(fetchCalls.length, 0);
+    });
+  }
+});
+
+test('a conversational introduction sends the actual name to Cal and both emails', async () => {
+  const start = setup();
+  const result = await POST(requestFor(start, validAttendee({ name: "Hi, I'm Jay Omilana" })));
+  assert.equal(result.status, 201);
+  const booking = JSON.parse(fetchCalls.find((call) => call.url.includes('/bookings')).options.body);
+  assert.equal(booking.attendee.name, 'Jay Omilana');
+  assert.ok(booking.bookingFieldsResponses['service-address']);
+  assert.ok(booking.bookingFieldsResponses['hvac-issue']);
+  for (const call of fetchCalls.filter((entry) => entry.url.includes('sendgrid.com'))) {
+    const email = JSON.parse(call.options.body);
+    assert.match(email.content[0].value, /Name: Jay Omilana/);
+    assert.doesNotMatch(email.content[0].value, /Hi, I'm/);
+  }
 });
