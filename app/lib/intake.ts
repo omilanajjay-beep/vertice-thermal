@@ -40,14 +40,22 @@ export function isQuestionOrSideRequest(value: unknown): boolean {
 
 export function validateIntakeAnswer(step: IntakeStep, answer: string): string {
   if (answer.length > (step === 'problem' ? 800 : 240)) return 'That reply is too long. Please shorten it and try again.';
-  if (step === 'name' && !normalizeName(answer)) return 'Please tell me your name, for example “Jay” or “I’m Jay.”';
-  if (step === 'phone' && answer.replace(/\D/g, '').length < 7) return 'Please enter a phone number with at least seven digits.';
-  if (step === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answer)) return 'Please enter a valid email address.';
-  if (step === 'address' && answer.length < 5) return 'Please include the street and area for the property.';
-  if (step === 'problem' && answer.length < 8) return 'Please share a little more about what the system is doing.';
+  if (step === 'name' && !normalizeName(answer)) return 'Please share the name you’d like me to use.';
+  if (step === 'phone' && answer.replace(/\D/g, '').length < 7) return 'That number looks a little short. Could you include at least seven digits?';
+  if (step === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answer)) return 'Please check the email address and try again.';
+  if (step === 'address' && answer.length < 5) return 'Could you include the street and area for the property?';
+  if (step === 'problem' && answer.length < 8) return 'Could you share a little more about what the heating or cooling system is doing?';
   return '';
 }
 
-export function fieldQuestion(step: IntakeStep): string {
-  return ({ name: 'What name should I use for you?', phone: 'What is the best phone number to reach you?', email: 'Which email address should we use for your appointment details?', address: 'What is the property address for the visit?', problem: 'How would you describe the heating or cooling issue?' } as const)[step];
+export function fieldQuestion(step: IntakeStep, name = ''): string {
+  if (step === 'address' && name) return `And ${name}, what’s the property address for the visit?`;
+  if (step === 'problem' && name) return `One last thing, ${name}: could you tell me a little about the heating or cooling issue?`;
+  return ({
+    name: 'To get us started, what name would you like me to use?',
+    phone: 'What’s the best phone number for the team to reach you on?',
+    email: 'Which email address would you like us to use for your appointment details?',
+    address: 'What’s the property address for the visit?',
+    problem: 'Could you tell me a little about the heating or cooling issue?',
+  } as const)[step];
 }

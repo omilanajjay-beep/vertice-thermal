@@ -60,7 +60,7 @@ function formatSlotDay(value: string, timeZone: string) {
 
 function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', text: 'Hi, I’m Elena, VERTICE’s virtual dispatch assistant. I can help arrange an HVAC visit. What’s your name?' },
+    { role: 'assistant', text: 'Hi there! I’m Elena, VERTICE’s virtual dispatch assistant. I’d be happy to help arrange a visit. To get us started, what name would you like me to use?' },
   ]);
   const [intake, setIntake] = useState<Intake>(emptyIntake);
   const [step, setStep] = useState(0);
@@ -109,7 +109,7 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
       const response = await fetch('/api/concierge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: field, answer, completedFields: intakeFields.slice(0, step), website: honeypot }),
+        body: JSON.stringify({ step: field, answer, completedFields: intakeFields.slice(0, step), knownName: intake.name, website: honeypot }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'I could not process that just now. Please try again.');
@@ -148,8 +148,8 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
       setMessages((current) => [...current, {
         role: 'assistant',
         text: data.emailWarning
-          ? 'Your appointment is reserved. One of the confirmation emails could not be sent, so dispatch will need to follow up.'
-          : 'Your appointment is confirmed. A confirmation email has been sent to you and the on-call technician.',
+          ? `${intake.name ? `${intake.name}, your visit is reserved. ` : 'Your visit is reserved. '}One of the confirmation emails couldn’t be sent, so our dispatch team will follow up.`
+          : `${intake.name ? `${intake.name}, you’re all set! ` : 'You’re all set! '}Your appointment is confirmed. A confirmation email has been sent to you and the on-call technician.`,
       }]);
     } catch (error) {
       setMessages((current) => [...current, { role: 'assistant', text: error instanceof Error ? error.message : 'Please try another time.' }]);
@@ -175,10 +175,10 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
         {busy && <div className="chat-bubble assistant typing"><span /><span /><span /></div>}
         {step === intakeFields.length && !busy && !booked && <div className="appointment-panel">
           <div className="appointment-title"><CalendarDays size={15} /><span>AVAILABLE VISIT TIMES</span></div>
-          <label className="booking-name">Guest name
-            <input value={intake.name} onChange={(event) => setIntake((current) => ({ ...current, name: event.target.value }))} maxLength={80} autoComplete="name" aria-label="Guest name for your appointment" />
+          <label className="booking-name">Name for the appointment
+            <input value={intake.name} onChange={(event) => setIntake((current) => ({ ...current, name: event.target.value }))} maxLength={80} autoComplete="name" aria-label="Name for the appointment" />
           </label>
-          {slotUnavailable ? <p className="slot-empty">Live appointment times are not available right now. Please try again later.</p> : <>
+          {slotUnavailable ? <p className="slot-empty">Sorry, live appointment times aren’t available just now. Please try again a little later.</p> : <>
             {Object.entries(grouped).map(([date, daySlots]) => <div className="slot-day" key={date}>
               <span className="slot-day-label">{formatSlotDay(date, timeZone)}</span>
               <div className="slot-grid">{daySlots.map((slot) => <button key={slot.start} className={`slot-choice ${selectedSlot === slot.start ? 'selected' : ''}`} onClick={() => setSelectedSlot(slot.start)} disabled={busy}>{formatSlotTime(slot.start, timeZone)}</button>)}</div>
@@ -192,10 +192,10 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
       </div>
       {step < intakeFields.length && <form className="chat-compose" onSubmit={(event) => { event.preventDefault(); void send(); }}>
         <label className="honeypot" aria-hidden="true">Website<input tabIndex={-1} autoComplete="off" value={honeypot} onChange={(event) => setHoneypot(event.target.value)} /></label>
-        <input value={input} onChange={(event) => setInput(event.target.value)} maxLength={step === 4 ? 800 : 240} placeholder={busy ? 'Elena is replying…' : 'Write a reply'} aria-label="Your reply" disabled={busy} />
+        <input value={input} onChange={(event) => setInput(event.target.value)} maxLength={step === 4 ? 800 : 240} placeholder={busy ? 'Elena is typing…' : 'Type your reply…'} aria-label="Your reply" disabled={busy} />
         <button type="submit" disabled={busy || !input.trim()} aria-label="Send reply"><Send size={16} /></button>
       </form>}
-      <p className="chat-footnote">Your contact details are used to arrange your visit. You can check your guest name before confirming.</p>
+      <p className="chat-footnote">Your details help the team arrange your visit. You can review the name on the appointment before confirming.</p>
     </aside>}
   </>;
 }

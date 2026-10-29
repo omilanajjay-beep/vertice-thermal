@@ -98,7 +98,7 @@ test('greeting does not advance, and canonical name reaches booking rather than 
   await submit(render, '123 Main Street, Portland');
   await submit(render, 'The furnace rattles loudly');
   assert.deepEqual(calls.filter((call) => call.url === '/api/concierge').map((call) => call.payload.step), ['name', 'name', 'phone', 'email', 'address', 'problem']);
-  assert.equal(byLabel(render(), 'Guest name for your appointment').props.value, 'Jay Omilana');
+  assert.equal(byLabel(render(), 'Name for the appointment').props.value, 'Jay Omilana');
   find(render(), (node) => node.props?.className?.startsWith('slot-choice')).props.onClick();
   find(render(), (node) => node.type === 'input' && node.props.type === 'checkbox').props.onChange({ target: { checked: true } });
   find(render(), (node) => node.props?.className === 'confirm-slot').props.onClick();
@@ -128,7 +128,7 @@ test('rejected reply stays on the same field and a reviewed guest name is submit
   const chatCalls = calls.filter((call) => call.url === '/api/concierge');
   assert.equal(chatCalls[2].payload.step, 'email');
   assert.equal(chatCalls[3].payload.step, 'email');
-  byLabel(render(), 'Guest name for your appointment').props.onChange({ target: { value: 'Jay Omilana' } });
+  byLabel(render(), 'Name for the appointment').props.onChange({ target: { value: 'Jay Omilana' } });
   find(render(), (node) => node.props?.className?.startsWith('slot-choice')).props.onClick();
   find(render(), (node) => node.type === 'input' && node.props.type === 'checkbox').props.onChange({ target: { checked: true } });
   find(render(), (node) => node.props?.className === 'confirm-slot').props.onClick();
