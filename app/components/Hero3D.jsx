@@ -22,8 +22,8 @@ function material(color, opacity = 1, emissive = color) {
     emissiveIntensity: opacity < 1 ? 0.5 : 0.18,
     transparent: opacity < 1,
     opacity,
-    metalness: 0.42,
-    roughness: 0.28,
+    metalness: 0.95,
+    roughness: 0.12,
     side: THREE.DoubleSide,
   });
 }
@@ -76,7 +76,7 @@ function buildAirflow(group, state) {
   addLabel(home, 'RESIDENTIAL AIR MAP', [-1.8, 1.34, 0], '#73c9ff');
   group.add(home);
 
-  const count = window.matchMedia('(max-width: 680px)').matches ? 900 : 2200;
+  const count = 3500;
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   for (let i = 0; i < count; i += 1) {
@@ -84,14 +84,14 @@ function buildAirflow(group, state) {
     positions[i * 3] = -2.1 + t * 4.2;
     positions[i * 3 + 1] = -0.35 + Math.sin(t * 38) * 0.44 + (Math.random() - 0.5) * 0.28;
     positions[i * 3 + 2] = Math.sin(t * 22) * 1.15 + (Math.random() - 0.5) * 0.42;
-    colors[i * 3] = 0.2;
-    colors[i * 3 + 1] = 0.72;
+    colors[i * 3] = 0;
+    colors[i * 3 + 1] = 0.95;
     colors[i * 3 + 2] = 1;
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  const particles = new THREE.Points(geometry, new THREE.PointsMaterial({ size: 0.026, vertexColors: true, transparent: true, opacity: 0.82, blending: THREE.AdditiveBlending }));
+  const particles = new THREE.Points(geometry, new THREE.PointsMaterial({ color: '#00f2fe', size: 0.038, vertexColors: true, transparent: true, opacity: 0.88, blending: THREE.AdditiveBlending }));
   group.add(particles);
   state.air = { particles, positions, colors, count };
 }
@@ -127,7 +127,7 @@ function buildTeardown(group, state) {
 }
 
 function buildFiltration(group, state) {
-  const count = window.matchMedia('(max-width: 680px)').matches ? 900 : 3500;
+  const count = 5000;
   const positions = new Float32Array(count * 3);
   const origin = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
@@ -139,12 +139,12 @@ function buildFiltration(group, state) {
     const z = Math.sin(theta) * radius;
     positions.set([x, y, z], i * 3);
     origin.set([x, y, z], i * 3);
-    colors.set([0.72, 0.6, 0.2], i * 3);
+    colors.set([0, 1, 1], i * 3);
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  const particles = new THREE.Points(geometry, new THREE.PointsMaterial({ size: 0.028, vertexColors: true, transparent: true, opacity: 0.78, blending: THREE.AdditiveBlending }));
+  const particles = new THREE.Points(geometry, new THREE.PointsMaterial({ color: '#00ffff', size: 0.032, vertexColors: true, transparent: true, opacity: 0.84, blending: THREE.AdditiveBlending }));
   group.add(particles);
   const filter = addBox(group, [1.9, 2.5, 0.16], [0, 0, 0], material('#75e7ef', 0.18, '#3bd6e0'), true);
   addLabel(group, 'HEPA / 99.97%', [-1.02, 1.52, 0], '#8ceff6');
@@ -178,7 +178,7 @@ function buildDispatch(group, state) {
 }
 
 function buildRoi(group, state) {
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.22, 20, 80), new THREE.MeshPhysicalMaterial({ color: '#f05d59', metalness: 0.9, roughness: 0.1, clearcoat: 1, emissive: '#5b1212', emissiveIntensity: 0.3 }));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.22, 20, 80), new THREE.MeshPhysicalMaterial({ color: '#f05d59', metalness: 0.95, roughness: 0.12, clearcoat: 1.0, clearcoatRoughness: 0.05, emissive: '#5b1212', emissiveIntensity: 0.3 }));
   ring.rotation.x = 0.55;
   group.add(ring);
   const inner = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.035, 10, 60), new THREE.MeshBasicMaterial({ color: '#ffb576', transparent: true, opacity: 0.8 }));
@@ -214,7 +214,7 @@ export default function Hero3D() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.35;
     renderer.domElement.setAttribute('aria-hidden', 'true');
     mount.appendChild(renderer.domElement);
 
@@ -276,10 +276,10 @@ export default function Hero3D() {
           attr.array[i * 3 + 2] = Math.sin(t * 22 + elapsed * 0.4) * (climateRef.current === 'cooling' ? 1.15 : 0.72);
         }
         attr.needsUpdate = true;
-        state.air.particles.material.color.set(climateRef.current === 'cooling' ? '#49b9ff' : '#ffae59');
+        state.air.particles.material.color.set(climateRef.current === 'cooling' ? '#00f2fe' : '#ff7a00');
       }
       if (state.teardown) {
-        state.teardown.rotor.rotation.z += 0.018;
+        state.teardown.rotor.rotation.z += 0.035;
         state.teardown.panels.forEach(({ panel, origin, axis }, index) => {
           const amount = state.teardown.hover * (index < 2 ? 0.72 : 0.42);
           panel.position.x = origin.x + (index < 2 ? axis * amount : 0);
@@ -318,7 +318,7 @@ export default function Hero3D() {
         });
       }
       if (state.roi) {
-        state.roi.ring.rotation.z += 0.006 * (seerRef.current - 12);
+        state.roi.ring.rotation.z += 0.009 * (seerRef.current - 12);
         state.roi.inner.rotation.z -= 0.01;
         const t = (seerRef.current - 14) / 12;
         state.roi.ring.material.color.lerpColors(new THREE.Color('#ed5557'), new THREE.Color('#64d99a'), t);
