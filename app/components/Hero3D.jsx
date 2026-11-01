@@ -207,8 +207,8 @@ export default function Hero3D() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const mobile = window.innerWidth < 680;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#05070c');
-    scene.fog = new THREE.Fog('#05070c', 7, 20);
+    scene.background = new THREE.Color('#03050a');
+    scene.fog = new THREE.Fog('#03050a', 7, 20);
     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
     camera.position.set(0, 0.1, mobile ? 8.2 : 6.4);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
@@ -235,6 +235,7 @@ export default function Hero3D() {
     MODULES.forEach((module) => {
       const group = new THREE.Group();
       group.visible = module.id === 'airflow';
+      group.scale.setScalar(module.id === 'airflow' ? 1 : 0.78);
       group.userData.opacity = module.id === 'airflow' ? 1 : 0;
       scene.add(group);
       groups[module.id] = group;
@@ -272,62 +273,69 @@ export default function Hero3D() {
     const render = () => {
       const elapsed = clock.getElapsedTime();
       const current = activeRef.current;
-      if (state.air) {
-        const attr = state.air.particles.geometry.attributes.position;
-        for (let i = 0; i < state.air.count; i += 1) {
-          const t = (i / state.air.count + elapsed * (climateRef.current === 'cooling' ? 0.13 : 0.055)) % 1;
-          attr.array[i * 3] = -2.1 + t * 4.2;
-          attr.array[i * 3 + 1] = -0.35 + Math.sin(t * 38 + elapsed) * (climateRef.current === 'cooling' ? 0.44 : 0.25) + Math.sin(i) * 0.02;
-          attr.array[i * 3 + 2] = Math.sin(t * 22 + elapsed * 0.4) * (climateRef.current === 'cooling' ? 1.15 : 0.72);
+      switch (current) {
+        case 'airflow': {
+          const attr = state.air.particles.geometry.attributes.position;
+          for (let i = 0; i < state.air.count; i += 1) {
+            const t = (i / state.air.count + elapsed * (climateRef.current === 'cooling' ? 0.13 : 0.055)) % 1;
+            attr.array[i * 3] = -2.1 + t * 4.2;
+            attr.array[i * 3 + 1] = -0.35 + Math.sin(t * 38 + elapsed) * (climateRef.current === 'cooling' ? 0.44 : 0.25) + Math.sin(i) * 0.02;
+            attr.array[i * 3 + 2] = Math.sin(t * 22 + elapsed * 0.4) * (climateRef.current === 'cooling' ? 1.15 : 0.72);
+          }
+          attr.needsUpdate = true;
+          state.air.particles.material.color.set(climateRef.current === 'cooling' ? '#00f2fe' : '#ff7a00');
+          break;
         }
-        attr.needsUpdate = true;
-        state.air.particles.material.color.set(climateRef.current === 'cooling' ? '#00f2fe' : '#ff7a00');
-      }
-      if (state.teardown) {
-        state.teardown.rotor.rotation.z += 0.035;
-        state.teardown.panels.forEach(({ panel, origin, axis }, index) => {
-          const amount = state.teardown.hover * (index < 2 ? 0.72 : 0.42);
-          panel.position.x = origin.x + (index < 2 ? axis * amount : 0);
-          panel.position.y = origin.y + (index >= 2 ? axis * amount : 0);
-        });
-      }
-      if (state.filtration) {
-        const f = state.filtration;
-        const attr = f.particles.geometry.attributes.position;
-        const col = f.particles.geometry.attributes.color;
-        const targetT = f.engaged ? 1 : 0;
-        for (let i = 0; i < f.count; i += 1) {
-          const index = i * 3;
-          const ox = f.origin[index];
-          const oy = f.origin[index + 1];
-          const oz = f.origin[index + 2];
-          const angle = Math.atan2(oz, ox) + elapsed * (f.engaged ? 1.8 : 0.08) + oy * 0.4;
-          const radius = f.engaged ? lerp(Math.hypot(ox, oz), 0.18, Math.min(1, elapsed % 4 / 3)) : Math.hypot(ox, oz);
-          attr.array[index] = lerp(ox, Math.cos(angle) * radius, targetT);
-          attr.array[index + 1] = lerp(oy, oy * 0.92, targetT);
-          attr.array[index + 2] = lerp(oz, Math.sin(angle) * radius, targetT);
-          col.array[index] = lerp(0.72, 0.2, targetT);
-          col.array[index + 1] = lerp(0.6, 0.95, targetT);
-          col.array[index + 2] = lerp(0.2, 1, targetT);
+        case 'teardown':
+          state.teardown.rotor.rotation.z += 0.035;
+          state.teardown.panels.forEach(({ panel, origin, axis }, index) => {
+            const amount = state.teardown.hover * (index < 2 ? 0.72 : 0.42);
+            panel.position.x = origin.x + (index < 2 ? axis * amount : 0);
+            panel.position.y = origin.y + (index >= 2 ? axis * amount : 0);
+          });
+          break;
+        case 'filtration': {
+          const f = state.filtration;
+          const attr = f.particles.geometry.attributes.position;
+          const col = f.particles.geometry.attributes.color;
+          const targetT = f.engaged ? 1 : 0;
+          for (let i = 0; i < f.count; i += 1) {
+            const index = i * 3;
+            const ox = f.origin[index];
+            const oy = f.origin[index + 1];
+            const oz = f.origin[index + 2];
+            const angle = Math.atan2(oz, ox) + elapsed * (f.engaged ? 1.8 : 0.08) + oy * 0.4;
+            const radius = f.engaged ? lerp(Math.hypot(ox, oz), 0.18, Math.min(1, elapsed % 4 / 3)) : Math.hypot(ox, oz);
+            attr.array[index] = lerp(ox, Math.cos(angle) * radius, targetT);
+            attr.array[index + 1] = lerp(oy, oy * 0.92, targetT);
+            attr.array[index + 2] = lerp(oz, Math.sin(angle) * radius, targetT);
+            col.array[index] = lerp(0.72, 0.2, targetT);
+            col.array[index + 1] = lerp(0.6, 0.95, targetT);
+            col.array[index + 2] = lerp(0.2, 1, targetT);
+          }
+          attr.needsUpdate = true;
+          col.needsUpdate = true;
+          f.filter.visible = f.engaged;
+          break;
         }
-        attr.needsUpdate = true;
-        col.needsUpdate = true;
-        f.filter.visible = f.engaged;
-      }
-      if (state.dispatch) {
-        state.dispatch.globe.rotation.y = elapsed * 0.08;
-        state.dispatch.beacons.forEach(({ ring, phase }) => {
-          const pulse = 1 + (Math.sin(elapsed * 2.4 + phase) + 1) * 0.32;
-          ring.scale.setScalar(pulse);
-          ring.material.opacity = 0.35 + (pulse - 1) * 0.9;
-        });
-      }
-      if (state.roi) {
-        state.roi.ring.rotation.z += 0.009 * (seerRef.current - 12);
-        state.roi.inner.rotation.z -= 0.01;
-        const t = (seerRef.current - 14) / 12;
-        state.roi.ring.material.color.lerpColors(new THREE.Color('#ed5557'), new THREE.Color('#64d99a'), t);
-        state.roi.ring.scale.setScalar(0.86 + t * 0.42);
+        case 'dispatch':
+          state.dispatch.globe.rotation.y = elapsed * 0.08;
+          state.dispatch.beacons.forEach(({ ring, phase }) => {
+            const pulse = 1 + (Math.sin(elapsed * 2.4 + phase) + 1) * 0.32;
+            ring.scale.setScalar(pulse);
+            ring.material.opacity = 0.35 + (pulse - 1) * 0.9;
+          });
+          break;
+        case 'roi': {
+          state.roi.ring.rotation.z += 0.009 * (seerRef.current - 12);
+          state.roi.inner.rotation.z -= 0.01;
+          const t = (seerRef.current - 14) / 12;
+          state.roi.ring.material.color.lerpColors(new THREE.Color('#ed5557'), new THREE.Color('#64d99a'), t);
+          state.roi.ring.scale.setScalar(0.86 + t * 0.42);
+          break;
+        }
+        default:
+          break;
       }
       if (!reduced) {
         camera.position.x += (pointerRef.current.x * 0.28 - camera.position.x) * 0.025;
