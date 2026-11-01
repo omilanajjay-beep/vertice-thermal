@@ -18,7 +18,7 @@ function createClient(initialOpen = true) {
     useMemo(fn) { return fn(); },
   };
   const jsx = (type, props) => ({ type, props: props || {} });
-  const file = path.resolve(__dirname, '../app/components/Concierge.tsx');
+  const file = path.resolve(__dirname, '../app/page.tsx');
   const code = ts.transpileModule(`${fs.readFileSync(file, 'utf8')}\nexport { Concierge };`, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
     fileName: file,
@@ -37,7 +37,7 @@ function createClient(initialOpen = true) {
     mod.filename = file;
     mod.paths = Module._nodeModulePaths(path.dirname(file));
     mod._compile(code, file);
-    component = mod.exports.default;
+    component = mod.exports.Concierge;
   } finally { Module._load = original; }
   let open = initialOpen;
   return () => { cursor = 0; return component({ open, setOpen(next) { open = next; } }); };
