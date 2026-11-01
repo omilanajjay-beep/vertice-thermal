@@ -58,7 +58,7 @@ function formatSlotDay(value: string, timeZone: string) {
   return new Intl.DateTimeFormat('en', { weekday: 'short', month: 'short', day: 'numeric', timeZone }).format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
 
-function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) => void }) {
+function Concierge({ open, setOpen, spotlight }: { open: boolean; setOpen: (next: boolean) => void; spotlight: boolean }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'assistant', text: 'Hi there! I’m Elena, VERTICE’s virtual dispatch assistant. I’d be happy to help arrange a visit. To get us started, what name would you like me to use?' },
   ]);
@@ -161,7 +161,7 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
   };
 
   return <>
-    {!open && <button type="button" className="chat-launcher" onClick={() => setOpen(true)} aria-label="Open chat" title="Open chat">
+    {!open && <button type="button" className="chat-launcher" data-spotlight={spotlight ? 'active' : undefined} onClick={() => setOpen(true)} aria-label="Open chat" title="Open chat">
       <MessageCircle size={25} strokeWidth={1.7} aria-hidden="true" />
     </button>}
     {open && <aside className="chat-drawer" aria-label="Elena concierge chat">
@@ -204,6 +204,7 @@ export default function Home() {
   const [partnerCount, setPartnerCount] = useState(3);
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [storyStage, setStoryStage] = useState(0);
   const setupTotal = partnerCount * 2500;
   const monthlyTotal = partnerCount * 1000;
   const firstYearTotal = setupTotal + monthlyTotal * 12;
@@ -229,13 +230,13 @@ export default function Home() {
 
     <section className="hero" id="top">
       <div className="hero-copy">
-        <span className="eyebrow">CLIMATE SYSTEMS / A CLOSER LOOK</span>
-        <h1>Comfort,<br /><i>quietly</i> perfected.</h1>
-        <p>Thoughtful heat-pump systems, considered as part of the architecture—not an afterthought outside it.</p>
-        <div className="hero-actions"><button className="button button-gold" onClick={() => document.getElementById('system')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}>Explore the system <ArrowUpRight size={15} /></button><button className="quiet-link" onClick={requestSurvey}>Arrange a conversation <ArrowRight size={15} /></button></div>
-        <div className="hero-facts"><div><span>01</span><small>Inverter-led<br />performance</small></div><div><span>02</span><small>Designed for<br />quiet operation</small></div><div><span>03</span><small>Serviceable<br />by design</small></div></div>
+        <span className="eyebrow">THE VERTICE COMFORT STORY / 01—05</span>
+        <h1>Home comfort,<br /><i>restored.</i></h1>
+        <p>One hot summer evening. One family ready to feel at home again. Follow five moments from a stifling room to comfort brought back by a careful HVAC expert.</p>
+        <div className="hero-actions"><button className="button button-gold" onClick={() => document.getElementById('comfort-story')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}>Explore the story <ArrowUpRight size={15} /></button><button className="quiet-link" onClick={requestSurvey}>Talk to Elena <ArrowRight size={15} /></button></div>
+        <div className="hero-facts"><div><span>01</span><small>A family<br />at home</small></div><div><span>02</span><small>Expert care,<br />thoughtfully done</small></div><div><span>03</span><small>Comfort<br />restored</small></div></div>
       </div>
-      <div className="hero-visual"><Hero3D /><div className="visual-label"><span>PRODUCT STUDY / OUTDOOR UNIT</span><span>INTERACTIVE 3D VIEW</span></div></div>
+      <div className="hero-visual" id="comfort-story"><Hero3D onOpenChat={requestSurvey} onStageChange={setStoryStage} /></div>
       <a className="scroll-cue" href="#system"><span>SCROLL TO EXPLORE</span><ArrowDownRight size={15} /></a>
     </section>
 
@@ -286,6 +287,6 @@ export default function Home() {
     <footer className="site-footer"><a className="brand" href="#top"><span className="brand-symbol">V</span><span className="brand-name">VERTICE<small>THERMAL</small></span></a><span className="footer-note">CLIMATE SYSTEMS / ARCHITECTURAL COMFORT</span><button onClick={requestSurvey}>Talk to Elena <ArrowUpRight size={14} /></button></footer>
 
     <SiteMotion />
-    <Concierge open={chatOpen} setOpen={setChatOpen} />
+    <Concierge open={chatOpen} setOpen={setChatOpen} spotlight={storyStage === 4} />
   </main>;
 }
