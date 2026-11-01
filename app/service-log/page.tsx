@@ -1,6 +1,5 @@
-import type { Metadata } from 'next';
-import PageExperience from '../components/PageExperience';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Service log — Comfort restored | VERTICE THERMAL', alternates: { canonical: '/service-log' } };
-
-export default function Page() { return <PageExperience page="service-log" />; }
+export default function LegacyServiceLogPage() {
+  redirect('/company/verified-reviews.html');
+}

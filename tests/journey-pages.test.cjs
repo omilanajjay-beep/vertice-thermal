@@ -4,19 +4,24 @@ const fs = require('node:fs');
 const path = require('node:path');
 const read = (name) => fs.readFileSync(path.resolve(__dirname, '..', name), 'utf8');
 
-test('each comfort moment is a real App Router page with a distinct scene assignment', () => {
-  const routes = ['', 'approach', 'system', 'service-log', 'contact', 'contractors'];
-  const keys = ['home', ...routes.slice(1)];
-  routes.forEach((route, index) => {
-    const source = read(`app/${route ? route + '/' : ''}page.tsx`);
-    assert.ok(source.includes(`<PageExperience page="${keys[index]}" />`));
-    assert.ok(source.includes('canonical:'));
-  });
-  const scenes = read('app/components/PageExperience.tsx');
-  for (const [key, stage] of [['home',0],['approach',1],['system',2],["'service-log'",3],['contact',4]]) {
-    assert.ok(scenes.includes(`${key}: { stage: ${stage},`));
+test('the five requested deep URLs are separate App Router pages with unique scene assignments', () => {
+  const routes = [
+    ['equipment/diagnostics.html', 'diagnostics'],
+    ['service/emergency-repair.html', 'repair'],
+    ['case-studies/comfort-restored.html', 'comfort'],
+    ['company/verified-reviews.html', 'reviews'],
+    ['booking/secure-dispatch.html', 'booking'],
+  ];
+  for (const [route, scene] of routes) {
+    const source = read(`app/${route}/page.tsx`);
+    assert.ok(source.includes(`<StoryPage page="${scene}" />`), `${route} owns the ${scene} view`);
+    assert.ok(source.includes(`canonical: '/${route}'`));
   }
-  assert.ok(scenes.includes('stageIndex={data.stage}'));
+  const home = read('app/components/StoryPage.tsx');
+  for (const route of ['/equipment/diagnostics.html', '/service/emergency-repair.html', '/case-studies/comfort-restored.html', '/company/verified-reviews.html', '/booking/secure-dispatch.html']) {
+    assert.ok(home.includes(route));
+  }
+  assert.ok(read('app/page.tsx').includes("redirect('/equipment/diagnostics.html')"));
 });
 
 test('the shared layout preserves a single concierge between client page transitions', () => {
@@ -24,7 +29,7 @@ test('the shared layout preserves a single concierge between client page transit
   const shell = read('app/components/SiteShell.tsx');
   assert.equal((shell.match(/<Concierge /g) || []).length, 1);
   assert.ok(shell.includes("import Link from 'next/link'"));
-  assert.ok(shell.includes("spotlight={pathname === '/contact'}"));
+  assert.ok(shell.includes("pathname === '/booking/secure-dispatch.html'"));
   assert.ok(shell.includes('ChatContext.Provider'));
 });
 
@@ -34,22 +39,27 @@ test('the final-page guide ends at the real launcher and never intercepts clicks
   assert.ok(guide.includes("getPropertyValue('--hand-x')"));
   assert.ok(guide.includes("getPropertyValue('--hand-y')"));
   assert.ok(read('app/globals.css').includes('z-index: 49; pointer-events: none;'));
-  assert.ok(read('app/components/PageExperience.tsx').includes('onClick={openChat}'));
+  assert.ok(read('app/components/StoryPage.tsx').includes('onClick={openChat}'));
+  assert.ok(read('app/components/StoryPage.tsx').includes('<ChatGuide />'));
 });
 
-test('photorealistic scenes are page-controlled, lightweight, and reduced-motion safe', () => {
-  const scene = read('app/components/PhotorealScene.tsx');
-  assert.ok(scene.includes('stageIndex'));
+test('each route owns a high-performance WebGL canvas with reduced-motion and unload cleanup', () => {
+  const scene = read('app/components/StoryScene.tsx');
+  assert.ok(scene.includes('WebGLRenderer({ antialias: true'));
+  assert.ok(scene.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))'));
+  assert.ok(scene.includes('THREE.PCFSoftShadowMap'));
   assert.ok(scene.includes("prefers-reduced-motion: reduce"));
   assert.ok(scene.includes('IntersectionObserver'));
-  assert.ok(scene.includes('video.pause()'));
-  assert.ok(scene.includes('muted'));
-  assert.ok(scene.includes('playsInline'));
-  assert.ok(!read('app/components/PageExperience.tsx').includes('<Hero3D'));
-  for (const id of ['hot-home', 'arrival', 'repair', 'comfort', 'chat-invitation']) {
-    for (const ext of ['mp4', 'jpg']) {
-      const file = path.resolve(__dirname, '..', 'public', 'media', `${id}.${ext}`);
-      assert.ok(fs.statSync(file).size > 10000);
-    }
+  assert.ok(scene.includes("window.addEventListener('beforeunload', onBeforeUnload)"));
+  assert.ok(scene.includes('renderer?.dispose()'));
+  assert.ok(scene.includes('device.rotation.y = elapsed * 0.48'));
+});
+
+test('the reviews page contains the five supplied review records without invented testimonials', () => {
+  const reviews = read('app/lib/reviews.ts');
+  for (const name of ['Marcus Vance', 'Elena Rostova', 'David & Sarah Kim', 'Chief Engineering Officer Robert Chen', 'Clara Montgomery']) {
+    assert.ok(reviews.includes(name));
   }
+  assert.equal((reviews.match(/id: '/g) || []).length, 5);
+  assert.ok(read('app/components/StoryPage.tsx').includes('homeownerReviews.map'));
 });

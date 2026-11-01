@@ -1,6 +1,5 @@
-import type { Metadata } from 'next';
-import PageExperience from './components/PageExperience';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Home comfort, restored | VERTICE THERMAL', alternates: { canonical: '/' } };
-
-export default function Page() { return <PageExperience page="home" />; }
+export default function HomePage() {
+  redirect('/equipment/diagnostics.html');
+}

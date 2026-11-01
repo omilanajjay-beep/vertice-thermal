@@ -1,6 +1,5 @@
-import type { Metadata } from 'next';
-import PageExperience from '../components/PageExperience';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'For contractors — Built together | VERTICE THERMAL', alternates: { canonical: '/contractors' } };
-
-export default function Page() { return <PageExperience page="contractors" />; }
+export default function LegacyContractorsPage() {
+  redirect('/booking/secure-dispatch.html');
+}
