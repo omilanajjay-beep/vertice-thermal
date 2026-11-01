@@ -1129,3 +1129,19 @@ body:has(.chat-drawer) .chat-beacon-note { display: none; }
   .story-closing-band { align-items: flex-start; flex-direction: column; gap: 25px; }
   .story-closing-band h2 { font-size: 44px; }
 }
+
+/* Slow lens drift and clean, luminous grading let each motion scene feel spacious and finely resolved. */
+.story-photoreal-video {
+  image-rendering: auto;
+  filter: contrast(1.035) saturate(1.025) brightness(1.012);
+  backface-visibility: hidden;
+  transform: translateZ(0) scale(1.025);
+  animation: story-camera-drift 28s ease-in-out infinite alternate;
+}
+@keyframes story-camera-drift {
+  from { transform: translate3d(.15%, .08%, 0) scale(1.025); }
+  to { transform: translate3d(-.35%, -.14%, 0) scale(1.055); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-photoreal-video { animation: none !important; transform: none; }
+}

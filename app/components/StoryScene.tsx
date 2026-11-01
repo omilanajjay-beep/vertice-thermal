@@ -547,6 +547,56 @@ function addSunlitDust(scene: THREE.Scene, count: number) {
   };
 }
 
+function addComfortAirflow(scene: THREE.Scene, step: StoryStep) {
+  const colors = step === 'repair'
+    ? ['#d6ad78', '#f2e2c9', '#b6c7b2']
+    : ['#ad9a70', '#dbe6d2', '#b8ceb9'];
+  const curves = [
+    new THREE.CatmullRomCurve3([
+      new THREE.Vector3(3.15, 2.7, -0.55), new THREE.Vector3(2.05, 2.54, -0.08),
+      new THREE.Vector3(0.62, 2.52, 0.18), new THREE.Vector3(-1.62, 2.36, 0.42),
+    ]),
+    new THREE.CatmullRomCurve3([
+      new THREE.Vector3(3.24, 2.5, -0.72), new THREE.Vector3(2.02, 2.35, -0.2),
+      new THREE.Vector3(0.48, 2.27, 0.16), new THREE.Vector3(-1.86, 2.12, 0.45),
+    ]),
+    new THREE.CatmullRomCurve3([
+      new THREE.Vector3(3.28, 2.3, -0.84), new THREE.Vector3(1.94, 2.15, -0.25),
+      new THREE.Vector3(0.36, 2.05, 0.18), new THREE.Vector3(-2.02, 1.92, 0.45),
+    ]),
+  ];
+  const paths = curves.map((curve, index) => {
+    const material = new THREE.MeshBasicMaterial({
+      color: colors[index], transparent: true, opacity: 0.2, depthWrite: false, depthTest: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const ribbon = new THREE.Mesh(new THREE.TubeGeometry(curve, 96, 0.009, 6, false), material);
+    ribbon.renderOrder = 3;
+    scene.add(ribbon);
+    return curve;
+  });
+  const beads: THREE.Mesh[] = [];
+  const beadMaterials = colors.map((color) => new THREE.MeshBasicMaterial({
+    color, transparent: true, opacity: 0.48, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+  }));
+  paths.forEach((curve, pathIndex) => {
+    for (let index = 0; index < 9; index += 1) {
+      const bead = new THREE.Mesh(new THREE.SphereGeometry(0.017 + (index % 3) * 0.006, 10, 8), beadMaterials[pathIndex]);
+      bead.renderOrder = 4;
+      scene.add(bead);
+      beads.push(bead);
+    }
+  });
+  return (time: number) => {
+    beads.forEach((bead, index) => {
+      const pathIndex = Math.floor(index / 9);
+      const progress = ((index % 9) / 9 + time * 0.045 + pathIndex * 0.21) % 1;
+      bead.position.copy(paths[pathIndex].getPointAt(progress));
+      bead.scale.setScalar(0.7 + (Math.sin(time * 2.2 + index * 0.7) + 1) * 0.48);
+    });
+  };
+}
+
 function addReviewBoard(scene: THREE.Scene, review: HomeownerReview) {
   const board = new THREE.Group();
   board.position.set(2.44, 1.8, -1.52);
@@ -571,8 +621,15 @@ function addReviewBoard(scene: THREE.Scene, review: HomeownerReview) {
 
 function setupRoomScene(scene: THREE.Scene, step: StoryStep, review: HomeownerReview, photorealMotion: boolean) {
   if (photorealMotion) {
-    const updateDust = addSunlitDust(scene, step === 'reviews' ? 20 : 34);
-    return { rigs: [] as CharacterRig[], update: updateDust };
+    const updateDust = addSunlitDust(scene, step === 'reviews' ? 64 : 88);
+    const updateAirflow = addComfortAirflow(scene, step);
+    return {
+      rigs: [] as CharacterRig[],
+      update(time: number) {
+        updateDust(time);
+        updateAirflow(time);
+      },
+    };
   }
 
   const warm = step === 'repair';
@@ -712,8 +769,8 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
     scene.add(ambient);
     const key = new THREE.DirectionalLight(step === 'repair' ? '#ffddc2' : '#fff8e8', 2.4);
     key.position.set(-4.6, 8.2, 5.1);
-    key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
+    key.castShadow = !motionSource;
+    key.shadow.mapSize.set(step === 'diagnostics' ? 2048 : 1024, step === 'diagnostics' ? 2048 : 1024);
     key.shadow.camera.left = -7;
     key.shadow.camera.right = 7;
     key.shadow.camera.top = 8;
@@ -737,7 +794,7 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
 
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: Boolean(motionSource), powerPreference: 'high-performance' });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth >= 1440 ? 2.5 : 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -769,7 +826,6 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
       return () => {
         reducedMotionQuery.removeEventListener('change', onMotionPreferenceChange);
         renderer?.dispose();
-        renderer?.forceContextLoss();
       };
     }
 
@@ -790,7 +846,6 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
       });
       environmentTexture?.dispose();
       renderer?.dispose();
-      renderer?.forceContextLoss();
     };
 
     const resize = () => {
@@ -819,10 +874,15 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
           camera.position.copy(cameraBasePosition).addScaledVector(reviewSweepOffset, 1 - sweepProgress).sub(cameraTarget).multiplyScalar(fitFactor).add(cameraTarget);
           camera.lookAt(cameraTarget);
         }
+        if (motionSource) {
+          camera.position.x = Math.sin(elapsed * 0.18) * 0.1;
+          camera.position.y = Math.sin(elapsed * 0.14) * 0.06;
+          camera.lookAt(cameraTarget);
+        }
         if (device) {
-          device.rotation.y = elapsed * 0.48;
-          device.rotation.x = Math.sin(elapsed * 0.52) * 0.055;
-          device.position.y = 1.1 + Math.sin(elapsed * 1.35) * 0.055;
+          device.rotation.y = elapsed * 0.68;
+          device.rotation.x = Math.sin(elapsed * 0.52) * 0.075;
+          device.position.y = 1.1 + Math.sin(elapsed * 1.35) * 0.072;
         }
         roomUpdater?.update(elapsed);
       }

@@ -48,13 +48,16 @@ test('the final-page guide ends at the real launcher and never intercepts clicks
 test('each route owns a high-performance WebGL canvas with reduced-motion and unload cleanup', () => {
   const scene = read('app/components/StoryScene.tsx');
   assert.ok(scene.includes('WebGLRenderer({ antialias: true'));
-  assert.ok(scene.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))'));
+  assert.ok(scene.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth >= 1440 ? 2.5 : 2))'));
   assert.ok(scene.includes('THREE.PCFSoftShadowMap'));
   assert.ok(scene.includes("prefers-reduced-motion: reduce"));
   assert.ok(scene.includes('IntersectionObserver'));
   assert.ok(scene.includes("window.addEventListener('beforeunload', onBeforeUnload)"));
   assert.ok(scene.includes('renderer?.dispose()'));
-  assert.ok(scene.includes('device.rotation.y = elapsed * 0.48'));
+  assert.ok(!scene.includes('renderer?.forceContextLoss()'), 'release old scenes without racing the next route’s shader compilation');
+  assert.ok(scene.includes('key.castShadow = !motionSource'));
+  assert.ok(scene.includes("key.shadow.mapSize.set(step === 'diagnostics' ? 2048 : 1024, step === 'diagnostics' ? 2048 : 1024)"));
+  assert.ok(scene.includes('device.rotation.y = elapsed * 0.68'));
 });
 
 test('the reviews page contains the five supplied review records without invented testimonials', () => {
@@ -89,6 +92,18 @@ test('each separate narrative page uses its own photoreal motion asset and one t
   assert.match(scene, /addSunlitDust\(scene/);
   const page = read('app/components/StoryPage.tsx');
   assert.equal((page.match(/<StoryScene\s/g) || []).length, 1, 'each URL shows only its own scene rather than five stacked videos');
+});
+
+test('all four filmed scenes receive animated 3D airflow, depth particles and gentle camera drift', () => {
+  const scene = read('app/components/StoryScene.tsx');
+  const styles = read('app/globals.css');
+  assert.ok(scene.includes('function addComfortAirflow(scene: THREE.Scene, step: StoryStep)'));
+  assert.ok(scene.includes('const updateAirflow = addComfortAirflow(scene, step)'));
+  assert.ok(scene.includes('updateAirflow(time)'));
+  assert.ok(scene.includes('step === \'reviews\' ? 64 : 88'));
+  assert.ok(scene.includes('camera.position.x = Math.sin(elapsed * 0.18) * 0.1'));
+  assert.ok(styles.includes('animation: story-camera-drift 28s ease-in-out infinite alternate'));
+  assert.ok(styles.includes('.story-photoreal-video { animation: none !important; transform: none; }'));
 });
 
 test('each story route exposes page boundaries, page-local scrolling and real previous/next URLs', () => {
