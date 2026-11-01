@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { gsap } from 'gsap';
 
-/** DOM-only accents: the hero remains the site's only WebGL scene. */
+/** Page-local entry accents; each real route owns its own scene. */
 export default function SiteMotion() {
   useEffect(() => {
     const media = gsap.matchMedia();
@@ -69,27 +69,7 @@ export default function SiteMotion() {
       return () => cleanups.forEach((cleanup) => cleanup());
     });
 
-    // Section navigation is the page transition model for this single-page site.
-    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.nav-links a'));
-    const sections = links.map((link) => document.querySelector(link.hash)).filter((section): section is Element => Boolean(section));
-    const visible = new Set<string>();
-    const navigation = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) visible.add(entry.target.id);
-        else visible.delete(entry.target.id);
-      });
-      const current = sections.find((section) => visible.has(section.id))?.id;
-      links.forEach((link) => {
-        if (link.hash === `#${current}`) link.setAttribute('aria-current', 'location');
-        else link.removeAttribute('aria-current');
-      });
-    }, { rootMargin: '-20% 0px -35% 0px' });
-    sections.forEach((section) => navigation.observe(section));
-    return () => {
-      media.revert();
-      navigation.disconnect();
-      links.forEach((link) => link.removeAttribute('aria-current'));
-    };
+    return () => media.revert();
   }, []);
   return null;
 }

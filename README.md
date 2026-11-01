@@ -1,6 +1,12 @@
 # VERTICE THERMAL
 
-A responsive architectural climate-systems site with a procedural Three.js product study, GSAP camera hotspots, contractor revenue calculator, truthful service/review states, and server-side concierge, Cal.com, and SendGrid routes.
+A responsive architectural climate-systems site with a real, five-page photorealistic rendered-motion comfort journey, a persistent Elena concierge, contractor revenue calculator, truthful service/review states, and server-side Cal.com and SendGrid routes.
+
+## The comfort journey
+
+Each scene belongs to a real, directly addressable page—not an extra HTML demo or a chapter picker inside one hero. `/` shows the hot home; `/approach` shows the technician arriving; `/system` shows the repair; `/service-log` shows restored comfort; and `/contact` shows the technician pointing to the real chatbot. `/contractors` retains the contractor calculator.
+
+The shared root layout keeps the same concierge mounted across client-side navigation. The final scene anchors a screen-space guide to the technician’s held pointing gesture; a non-interactive guide points to the actual fixed chat launcher. All calls to action open that same chat. The photorealistic scenes use pre-rendered, silent video loops rather than live character meshes. They respect reduced motion with still posters, pause offscreen, and only load the active page’s video. The earlier WebGL study remains source-only and is not mounted in the live experience.
 
 ## Local development
 
