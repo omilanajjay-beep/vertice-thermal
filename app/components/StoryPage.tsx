@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, BadgeCheck, Check, MessageCircle, ShieldCheck, Snowflake, Wrench } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, BadgeCheck, Check, MessageCircle, ShieldCheck } from 'lucide-react';
 import { useOpenChat } from './SiteShell';
 import StoryScene, { type StoryStep } from './StoryScene';
 import ChatGuide from './ChatGuide';
 import { homeownerReviews } from '../lib/reviews';
+import RouteEditorial from './RouteEditorial';
 
 export type StoryRoute = 'diagnostics' | 'repair' | 'comfort' | 'reviews' | 'booking';
 
@@ -87,6 +88,14 @@ const story: Record<StoryRoute, StoryData> = {
 
 const orderedRoutes: StoryRoute[] = ['diagnostics', 'repair', 'comfort', 'reviews', 'booking'];
 
+const pageNotes: Record<StoryRoute, string[]> = {
+  diagnostics: ['Measured system readings', 'Clear recommendations', 'Care for the whole home'],
+  repair: ['Listen to the symptoms', 'Find the underlying issue', 'Agree the next step'],
+  comfort: ['Balanced airflow', 'A calmer everyday', 'Considered aftercare'],
+  reviews: ['Five homeowner accounts', 'Service dates included', 'Their own words'],
+  booking: ['Live appointment times', 'Your details reviewed', 'Two confirmations'],
+};
+
 function reviewerInitials(name: string) {
   const words = name.replace(/^Chief Engineering Officer /, '').split(/\s+/).filter((word) => word !== '&');
   return `${words[0]?.[0] ?? ''}${words[words.length - 1]?.[0] ?? ''}`;
@@ -114,9 +123,7 @@ function ReviewsList() {
 
 function RouteDetails({ page, openChat }: { page: StoryRoute; openChat: () => void }) {
   if (page === 'reviews') return <ReviewsList />;
-  if (page === 'diagnostics') return <section className="story-detail-band"><span className="story-detail-icon"><Snowflake size={21} /></span><div><span className="story-kicker">ASSESS / EXPLAIN / RECOMMEND</span><h2>Every reading has a reason.</h2><p>We use measured system information to explain what is working, what needs attention and which options make sense for the home. Recommendations are confirmed after an on-site assessment.</p></div><button className="story-text-link" onClick={openChat}>Talk through a concern <ArrowUpRight size={15} /></button></section>;
-  if (page === 'repair') return <section className="story-detail-band repair-note"><span className="story-detail-icon"><Wrench size={21} /></span><div><span className="story-kicker">URGENT SERVICE / HUMAN SUPPORT</span><h2>Start with what you notice.</h2><p>Tell the concierge which system is affected, what changed and where the home is located. A visit is only booked after you select a live time and confirm.</p></div><button className="story-text-link" onClick={openChat}>Describe the issue <ArrowUpRight size={15} /></button></section>;
-  if (page === 'comfort') return <section className="story-detail-band comfort-note"><span className="story-detail-icon"><Snowflake size={21} /></span><div><span className="story-kicker">AFTER THE REPAIR</span><h2>Comfort is a whole-home feeling.</h2><p>Airflow, temperature balance and quieter equipment all contribute to a home that feels settled. The right follow-up depends on the system and the property.</p></div><button className="story-text-link" onClick={openChat}>Ask about your home <ArrowUpRight size={15} /></button></section>;
+  if (page === 'diagnostics' || page === 'repair' || page === 'comfort') return <RouteEditorial page={page} openChat={openChat} />;
   return <section className="booking-panel"><div><span className="story-kicker">SECURE DISPATCH / LIVE AVAILABILITY</span><h2>Review every detail<br /><i>before you book.</i></h2><p>Elena collects a few details, checks the live schedule, then shows the appointment name and available times. Nothing is reserved until you confirm.</p></div><div className="booking-checklist"><p><Check size={15} /> Live appointment availability</p><p><Check size={15} /> Appointment details reviewed first</p><p><Check size={15} /> Confirmations to homeowner and dispatch</p><button className="story-button" onClick={openChat}>Open Elena’s concierge <MessageCircle size={16} /></button></div></section>;
 }
 
@@ -124,31 +131,45 @@ export default function StoryPage({ page }: { page: StoryRoute }) {
   const openChat = useOpenChat();
   const data = story[page];
   const currentIndex = orderedRoutes.indexOf(page);
-  const next = story[orderedRoutes[(currentIndex + 1) % orderedRoutes.length]];
-  return <main className={`deep-story deep-story-${page}`}>
+  const previous = currentIndex > 0 ? story[orderedRoutes[currentIndex - 1]] : null;
+  const next = currentIndex < orderedRoutes.length - 1 ? story[orderedRoutes[currentIndex + 1]] : null;
+  return <main key={page} className={`deep-story deep-story-${page}`} data-story-page={page}>
+    <header className="story-page-header">
+      <div className="story-page-location"><span>THE COMFORT STORY</span><strong>PAGE {currentIndex + 1} OF 5 <span aria-hidden="true">/</span> {data.label}</strong></div>
+      <nav className="deep-route-nav" aria-label="Choose a story page">
+        {orderedRoutes.map((route, index) => <Link key={route} href={story[route].path} scroll={true} aria-label={`Page ${index + 1}: ${story[route].label}`} aria-current={route === page ? 'page' : undefined}>
+          <span className="deep-route-count">0{index + 1}</span><span className="deep-route-title">{story[route].label}</span><ArrowUpRight size={13} />
+        </Link>)}
+      </nav>
+    </header>
     <section className="deep-hero" aria-labelledby="deep-page-title">
       <div className="deep-hero-copy">
         <span className="story-kicker"><span className="story-live-dot" /> VERTICE THERMAL / {data.eyebrow}</span>
         <h1 id="deep-page-title">{data.title}<br /><i>{data.accent}</i></h1>
         <p className="deep-hero-description">{data.description}</p>
         <div className="deep-hero-actions">
-          {page === 'booking' ? <button className="story-button" onClick={openChat}>Open Elena’s concierge <MessageCircle size={16} /></button> : <Link className="story-button" href={data.nextPath}>{data.nextLabel} <ArrowUpRight size={15} /></Link>}
+          {page === 'booking' ? <button className="story-button" onClick={openChat}>Open Elena’s concierge <MessageCircle size={16} /></button> : <a className="story-button" href="#page-details">{page === 'reviews' ? 'Read the homeowner reviews' : 'Explore this page'} <ArrowDown size={15} /></a>}
           <button className="story-quiet-link" onClick={openChat}>Talk to Elena <ArrowRight size={15} /></button>
         </div>
         <div className="deep-context"><span />{data.context}</div>
+        <div className="story-hero-facts">{pageNotes[page].map((note, index) => <div key={note}><span>0{index + 1}</span><small>{note}</small></div>)}</div>
+        <a className="story-page-scroll" href="#page-details"><ArrowDown size={14} /> Scroll to explore {data.label.toLowerCase()}</a>
       </div>
       <div className="deep-scene-wrap">
         <StoryScene key={`${data.scene}-${page}`} step={data.scene} review={homeownerReviews[0]} />
         <div className="scene-corner-label"><span>FIELD NOTE / 0{currentIndex + 1}</span><span>VERTICE / COMFORT IN PRACTICE</span></div>
       </div>
     </section>
-    <nav className="deep-route-nav" aria-label="Five-page comfort story">
-      {orderedRoutes.map((route, index) => <Link key={route} href={story[route].path} aria-current={route === page ? 'page' : undefined}>
-        <span className="deep-route-count">0{index + 1}</span><span className="deep-route-title">{story[route].label}</span><ArrowUpRight size={13} />
-      </Link>)}
-    </nav>
-    <RouteDetails page={page} openChat={openChat} />
+    <div className="story-manifesto"><span>FORM FOLLOWS COMFORT</span><i aria-hidden="true" /><span>THOUGHTFULLY CARED FOR</span><i aria-hidden="true" /><span>HOME, AS IT SHOULD FEEL</span></div>
+    <div id="page-details" className="story-page-details"><RouteDetails page={page} openChat={openChat} /></div>
+    <section className="story-closing-band"><div><span className="story-kicker">A MORE CONSIDERED KIND OF COMFORT</span><h2>Let’s start with<br /><i>your home.</i></h2></div><button className="story-button" onClick={openChat}>Talk to Elena <ArrowUpRight size={16} /></button></section>
     {page === 'booking' && <><ChatGuide /><div className="chat-beacon-note" aria-hidden="true">OPEN DISPATCH CHAT <span>↘</span></div></>}
-    <section className="deep-next"><span>CONTINUE THE COMFORT STORY</span><Link href={next.path}>{next.label}<ArrowRight size={17} /></Link></section>
+    <nav className="story-page-pagination" aria-label="Previous and next story pages">
+      <div className="story-page-end"><span>END OF PAGE {currentIndex + 1} OF 5</span><p>{next ? 'Continue the story on the next page.' : 'Your home. Your next step.'}</p></div>
+      <div className="story-page-turns">
+        {previous && <Link className="story-previous-page" href={previous.path} scroll={true}><ArrowLeft size={16} /><span><small>PREVIOUS PAGE / 0{currentIndex}</small>{previous.label}</span></Link>}
+        {next ? <Link className="story-next-page" href={next.path} scroll={true}><span><small>NEXT PAGE / 0{currentIndex + 2}</small>{next.label}</span><ArrowRight size={20} /></Link> : <Link className="story-next-page" href={story.diagnostics.path} scroll={true}><span><small>BACK TO PAGE 01</small>Return to the system</span><ArrowRight size={20} /></Link>}
+      </div>
+    </nav>
   </main>;
 }

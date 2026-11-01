@@ -90,3 +90,26 @@ test('each separate narrative page uses its own photoreal motion asset and one t
   const page = read('app/components/StoryPage.tsx');
   assert.equal((page.match(/<StoryScene\s/g) || []).length, 1, 'each URL shows only its own scene rather than five stacked videos');
 });
+
+test('each story route exposes page boundaries, page-local scrolling and real previous/next URLs', () => {
+  const page = read('app/components/StoryPage.tsx');
+  assert.ok(page.includes('data-story-page={page}'));
+  assert.ok(page.includes('PAGE {currentIndex + 1} OF 5'));
+  assert.ok(page.includes('END OF PAGE {currentIndex + 1} OF 5'));
+  assert.ok(page.includes('href="#page-details"'));
+  assert.ok(page.includes('id="page-details"'));
+  assert.ok(page.includes('href={next.path} scroll={true}'));
+  assert.ok(page.includes('href={previous.path} scroll={true}'));
+  assert.ok(page.includes('currentIndex < orderedRoutes.length - 1'));
+  assert.ok(!page.includes('(currentIndex + 1) % orderedRoutes.length'));
+  assert.ok(!page.includes('onWheel'));
+});
+
+test('the Apex-inspired layout keeps editorial facts and only the current stage details', () => {
+  const page = read('app/components/StoryPage.tsx');
+  assert.ok(page.includes('story-hero-facts'));
+  assert.ok(page.includes('story-manifesto'));
+  assert.ok(page.includes('<RouteEditorial page={page} openChat={openChat} />'));
+  assert.ok(page.includes('story-closing-band'));
+  assert.ok(read('app/components/RouteEditorial.tsx').includes('feature-stack'));
+});
