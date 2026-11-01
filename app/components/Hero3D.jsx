@@ -205,11 +205,12 @@ export default function Hero3D() {
     if (!mountRef.current) return undefined;
     const mount = mountRef.current;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const mobile = window.innerWidth < 680;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#05070c');
     scene.fog = new THREE.Fog('#05070c', 7, 20);
     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
-    camera.position.set(0, 0.1, 6.4);
+    camera.position.set(0, 0.1, mobile ? 8.2 : 6.4);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -218,14 +219,15 @@ export default function Hero3D() {
     renderer.domElement.setAttribute('aria-hidden', 'true');
     mount.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight('#8aa2bd', 1.25));
+    const lightScale = mobile ? 1.5 : 1;
+    scene.add(new THREE.AmbientLight('#8aa2bd', 1.25 * lightScale));
     const key = new THREE.DirectionalLight('#dcecff', 3.2);
     key.position.set(3, 5, 5);
     scene.add(key);
-    const blue = new THREE.PointLight('#2c9eff', 15, 10, 2);
+    const blue = new THREE.PointLight('#2c9eff', 15 * lightScale, 10, 2);
     blue.position.set(-3, 1, 3);
     scene.add(blue);
-    const red = new THREE.PointLight('#ff5260', 6, 8, 2);
+    const red = new THREE.PointLight('#ff5260', 6 * lightScale, 8, 2);
     red.position.set(3, -1, 2);
     scene.add(red);
 
@@ -255,12 +257,15 @@ export default function Hero3D() {
     window.addEventListener('resize', resize, { passive: true });
 
     const root = mount.parentElement || mount;
+    const scrollRef = { current: window.scrollY };
     const pointerMove = (event) => {
       const bounds = root.getBoundingClientRect();
       pointerRef.current.set(((event.clientX - bounds.left) / bounds.width) * 2 - 1, 1 - ((event.clientY - bounds.top) / bounds.height) * 2);
       if (state.teardown) state.teardown.hover = clamp(pointerRef.current.x * 0.75 + 0.5, 0, 1);
     };
+    const scrollMove = () => { scrollRef.current = window.scrollY; };
     root.addEventListener('pointermove', pointerMove, { passive: true });
+    window.addEventListener('scroll', scrollMove, { passive: true });
 
     const clock = new THREE.Clock();
     let frame = 0;
@@ -326,7 +331,8 @@ export default function Hero3D() {
       }
       if (!reduced) {
         camera.position.x += (pointerRef.current.x * 0.28 - camera.position.x) * 0.025;
-        camera.position.y += (pointerRef.current.y * 0.18 + 0.1 - camera.position.y) * 0.025;
+        const scrollLift = clamp(scrollRef.current / Math.max(window.innerHeight, 1), 0, 1) * 0.22;
+        camera.position.y += (pointerRef.current.y * 0.18 + 0.1 + scrollLift - camera.position.y) * 0.025;
         camera.lookAt(0, 0, 0);
       }
       renderer.render(scene, camera);
@@ -337,6 +343,7 @@ export default function Hero3D() {
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', resize);
       root.removeEventListener('pointermove', pointerMove);
+      window.removeEventListener('scroll', scrollMove);
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
