@@ -4,17 +4,20 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
-  --ink: #0b0c0e;
-  --ink-soft: #101214;
-  --panel: rgba(23, 25, 26, .76);
-  --paper: #eee9df;
-  --sand: #c1b9ab;
-  --muted: #86847e;
-  --gold: #c5a880;
-  --gold-bright: #ddc298;
-  --line: rgba(238, 233, 223, .13);
-  --glass-line: rgba(238, 233, 223, .2);
+  color-scheme: light;
+  --ink: #f7f5ef;
+  --ink-soft: #eee9de;
+  --panel: rgba(255, 253, 248, .9);
+  --paper: #263a34;
+  --sand: #596b63;
+  --muted: #74827a;
+  --gold: #b38a4e;
+  --gold-bright: #896633;
+  --line: rgba(49, 68, 58, .14);
+  --glass-line: rgba(49, 68, 58, .2);
+  --page-background: #f7f5ef;
+  --page-surface: #fffdf8;
+  --page-sage: #e8efea;
   --serif: 'Playfair Display', Georgia, serif;
   --sans: 'Plus Jakarta Sans', Arial, sans-serif;
   --mono: 'DM Mono', monospace;
@@ -784,3 +787,252 @@ input[type='range']::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
 }
 
 .review-stars small { margin-left: 11px; color: #c2b491; font: 8px var(--mono); letter-spacing: .04em; vertical-align: middle; }
+
+
+/* Warm daylight theme: ivory walls, natural wood, soft sage and restrained brass. */
+html { background: var(--page-background); }
+body {
+  background: radial-gradient(ellipse at 78% 0%, #f0f3eb 0%, transparent 34%), var(--page-background);
+  color: var(--paper);
+}
+::selection { color: #263a34; background: #e6d2a9; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline-color: #8b6936; }
+
+.status-bar {
+  border-bottom-color: rgba(53, 74, 61, .12);
+  background: rgba(250, 248, 241, .9);
+  color: #718078;
+}
+.status-right { color: #65746c; }
+.site-nav {
+  border-bottom-color: rgba(53, 74, 61, .14);
+  background: rgba(250, 248, 241, .92);
+  box-shadow: 0 8px 28px rgba(54, 62, 47, .035);
+}
+.brand-symbol { color: #a57d40; }
+.brand-name { color: #2b4038; }
+.brand-name small { color: #8f7043; }
+.nav-links { color: #53685e; }
+.nav-links a:hover, .nav-links a[aria-current='page'], .nav-links a[aria-current='location'] { color: #8a6837; }
+.nav-links a::after { background: #ae8951; }
+.nav-cta, .site-footer > button {
+  border-color: rgba(135, 105, 58, .42);
+  background: rgba(255, 253, 247, .58);
+  color: #34483d;
+}
+.nav-cta:hover, .site-footer > button:hover {
+  border-color: #9a7842;
+  background: #9a7842;
+  color: #fffdf7;
+}
+.menu-toggle { color: #34483d; }
+.site-footer {
+  border-top: 1px solid rgba(53, 74, 61, .12);
+  background: #f3f0e7;
+}
+.footer-note { color: #6c7a72; }
+
+.deep-story {
+  --story-ivory: #293d36;
+  --story-muted: #69786f;
+  --story-gold: #9c7841;
+  color: #293d36;
+  background: var(--page-background);
+}
+.deep-hero { background: #f8f7f1; }
+.deep-hero-copy {
+  background: radial-gradient(ellipse at 12% 46%, rgba(212, 190, 150, .22), transparent 62%), linear-gradient(112deg, #fbfaf5, #f7f5ed);
+}
+.story-kicker { color: #886b3d; }
+.story-live-dot { background: #719780; box-shadow: 0 0 0 4px rgba(113, 151, 128, .13); }
+.deep-hero h1 { color: #263b34; }
+.deep-hero h1 i, .review-library-heading h2 i, .booking-panel h2 i { color: #9a7745; }
+.deep-hero-description { color: #5b6b62; }
+.story-button {
+  border-color: #9a7842;
+  background: #9a7842;
+  color: #fffdf7;
+  box-shadow: 0 8px 22px rgba(106, 83, 43, .13);
+}
+.story-button:hover { background: #826537; border-color: #826537; }
+.story-quiet-link, .story-text-link { color: #4d665a; }
+.story-quiet-link:hover, .story-text-link:hover { color: #876638; }
+.deep-context { color: #69786f; }
+.deep-context > span { background: #a7834b; }
+.deep-scene-wrap {
+  border-left-color: rgba(53, 74, 61, .12);
+  background: radial-gradient(ellipse at 52% 39%, #f5f5ee 0%, #e9efe7 55%, #e4ebe4 100%);
+}
+.story-scene-repair { background: radial-gradient(ellipse at 50% 42%, #f6ddd1, #f2e8de 68%, #eee9e1); }
+.story-scene-comfort, .story-scene-reviews, .story-scene-booking { background: radial-gradient(ellipse at 50% 38%, #eff5ef, #e6efea 66%, #e0ebe4); }
+.scene-corner-label {
+  color: #54665d;
+  text-shadow: 0 1px 2px rgba(255, 253, 247, .8);
+}
+.scene-corner-label span:first-child { color: #886b3d; }
+.scene-fallback { background: radial-gradient(ellipse, #f7f5ed, #e7eee7 72%); color: #31473d; }
+.scene-fallback small { color: #69786f; }
+.deep-route-nav {
+  border-bottom-color: rgba(53, 74, 61, .14);
+  background: #f0eee6;
+}
+.deep-route-nav a { border-color: rgba(53, 74, 61, .12); color: #64746b; }
+.deep-route-nav a:hover, .deep-route-nav a[aria-current='page'] {
+  color: #2c4337;
+  background: linear-gradient(180deg, rgba(179, 145, 87, .13), rgba(255, 253, 247, .2));
+}
+.deep-route-nav a[aria-current='page']::before { background: #a17d45; }
+.deep-route-count, .deep-route-nav a[aria-current='page'] .deep-route-count { color: #987849; }
+.deep-route-nav svg { color: #92713f; }
+.story-detail-band {
+  border-bottom-color: rgba(53, 74, 61, .12);
+  background: linear-gradient(105deg, rgba(222, 231, 221, .6), rgba(255, 253, 247, .28) 68%);
+}
+.story-detail-icon { border-color: rgba(138, 111, 66, .32); color: #8b6b3a; background: rgba(255, 253, 247, .6); }
+.story-detail-band h2 { color: #2a3e36; }
+.story-detail-band p { color: #5f6f66; }
+.story-text-link { color: #846537; }
+.repair-note { background: radial-gradient(ellipse at 0% 50%, rgba(207, 121, 93, .13), transparent 53%); }
+.comfort-note { background: radial-gradient(ellipse at 0% 50%, rgba(108, 173, 155, .15), transparent 54%); }
+.review-library { background: #f8f6f0; }
+.review-library-heading h2 { color: #293e36; }
+.review-library-heading > p { color: #627269; }
+.review-card {
+  border-color: rgba(64, 84, 69, .15);
+  border-radius: 4px;
+  background: linear-gradient(145deg, #fffefa, #f2efe6 100%);
+  box-shadow: 0 12px 34px rgba(64, 76, 58, .055);
+}
+.review-card:hover {
+  border-color: rgba(153, 119, 62, .42);
+  background: linear-gradient(145deg, #fffefa, #f6f0e3 100%);
+}
+.review-card-top { color: #6e7b71; }
+.review-number, .review-category { color: #896a3d; }
+.review-date { color: #52645a; }
+.review-date svg, .review-verified { color: #5d846a; }
+.review-stars { color: #ad8545; text-shadow: none; }
+.review-stars small { color: #69786f; }
+.review-card h3 { color: #2e4339; }
+.review-body { color: #56675e; }
+.review-attribution { border-top-color: rgba(64, 84, 69, .14); }
+.review-initials { border-color: rgba(153, 119, 62, .3); color: #86663a; background: #faf5e9; }
+.review-attribution strong { color: #31463c; }
+.review-attribution small, .review-source-note { color: #69786f; }
+.review-source-note svg { color: #76917b; }
+.booking-panel {
+  border-bottom-color: rgba(53, 74, 61, .12);
+  background: radial-gradient(ellipse at 14% 50%, rgba(179, 207, 187, .25), transparent 52%), #f6f4ed;
+}
+.booking-panel h2 { color: #293e36; }
+.booking-panel > div:first-child > p { color: #5f7067; }
+.booking-checklist {
+  border-color: rgba(69, 92, 75, .17);
+  background: linear-gradient(150deg, #fffefa, #f1efe7);
+  box-shadow: 0 16px 36px rgba(58, 76, 58, .07);
+}
+.booking-checklist p { color: #50635a; }
+.booking-checklist p svg { color: #668a70; }
+.deep-next {
+  border-bottom-color: rgba(53, 74, 61, .12);
+  background: linear-gradient(90deg, rgba(222, 231, 221, .45), rgba(255, 253, 247, .2));
+}
+.deep-next > span { color: #6d7a72; }
+.deep-next > a { color: #84663a; }
+
+/* The live booking concierge uses the same bright, calm surface system. */
+.chat-launcher {
+  border-color: rgba(139, 108, 58, .36);
+  background: #fffdf8;
+  color: #597b67;
+  box-shadow: 0 12px 30px rgba(45, 61, 47, .17);
+}
+.chat-launcher:hover { border-color: #a27c43; background: #fffefb; }
+.chat-drawer {
+  border-color: rgba(64, 83, 69, .16);
+  background: rgba(255, 253, 248, .98);
+  color: #293d36;
+  box-shadow: 0 24px 70px rgba(39, 54, 42, .2), inset 0 1px rgba(255, 255, 255, .9);
+}
+.chat-header, .chat-compose { border-color: rgba(64, 83, 69, .13); }
+.chat-title h2 { color: #293d36; }
+.icon-button { color: #586a60; }
+.chat-bubble.assistant { border-color: rgba(64, 83, 69, .11); background: #f0efe8; color: #475b50; }
+.chat-bubble.user { background: #dbe9dd; color: #2d4638; }
+.chat-compose > input { color: #293d36; }
+.chat-compose > input::placeholder { color: #7a877f; }
+.chat-footnote { color: #6d7a72; }
+.appointment-panel { border-color: rgba(139, 108, 58, .22); background: #f7f4ec; }
+.booking-name, .timezone-note, .consent-line { color: #68776f; }
+.booking-name input { border-color: rgba(64, 83, 69, .18); background: #fffefa; color: #293d36; }
+.slot-choice { border-color: rgba(64, 83, 69, .18); background: #fffefa; color: #4d6156; }
+.slot-choice:hover, .slot-choice.selected { border-color: #8a7044; background: #eee5d2; color: #72572e; }
+.confirm-slot { border-color: #8e7041; background: #8e7041; color: #fffdf8; }
+.slot-empty { color: #56685e; }
+.booking-confirmation { border-color: rgba(85, 128, 99, .24); background: #e8f1e8; color: #355d43; }
+.chat-beacon-note {
+  border-color: rgba(92, 135, 109, .28);
+  border-radius: 4px;
+  background: rgba(250, 250, 242, .95);
+  color: #496650;
+  box-shadow: 0 8px 22px rgba(43, 60, 44, .12);
+}
+.chat-beacon-note span { color: #66876c; }
+.chat-launcher[data-spotlight='active'] {
+  border-color: rgba(86, 139, 110, .66);
+  color: #446f57;
+  box-shadow: 0 0 0 1px rgba(98, 149, 118, .22), 0 0 30px rgba(99, 158, 124, .27), 0 12px 32px rgba(42, 58, 44, .19);
+  animation: concierge-glow-light 2.5s ease-in-out infinite;
+}
+.chat-launcher[data-spotlight='active']::before { border-color: rgba(103, 157, 125, .45); box-shadow: 0 0 22px rgba(90, 149, 115, .2), inset 0 0 18px rgba(125, 168, 133, .08); }
+.chat-launcher[data-spotlight='active']::after {
+  background: radial-gradient(circle at 50% 1%, #fff9e6 0 2px, transparent 3px), radial-gradient(circle at 98% 50%, #9bc5a5 0 2px, transparent 3px), radial-gradient(circle at 50% 99%, #f0dba8 0 2px, transparent 3px), radial-gradient(circle at 2% 50%, #82b394 0 2px, transparent 3px), radial-gradient(circle at 84% 15%, rgba(255, 250, 233, .94) 0 1.5px, transparent 2.5px), radial-gradient(circle at 15% 84%, rgba(234, 244, 225, .94) 0 1.5px, transparent 2.5px);
+  filter: drop-shadow(0 0 4px rgba(112, 159, 119, .6));
+}
+@keyframes concierge-glow-light {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(98, 149, 118, .2), 0 8px 24px rgba(99, 158, 124, .2), 0 12px 32px rgba(42, 58, 44, .16); }
+  50% { box-shadow: 0 0 0 2px rgba(98, 149, 118, .27), 0 10px 30px rgba(99, 158, 124, .32), 0 14px 35px rgba(42, 58, 44, .2); }
+}
+@media (max-width: 820px) {
+  .nav-links { background: rgba(250, 248, 241, .98); box-shadow: 0 14px 26px rgba(49, 63, 50, .08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-launcher[data-spotlight='active'] { animation: none !important; }
+}
+
+/* Shared legacy surfaces also inherit daylight if reused by a future route. */
+.hero-visual, .photoreal-scene, .journey-hero .hero-visual { background: radial-gradient(ellipse at 54% 42%, #f7f5ed, #e5ede5 100%); }
+.team-section { background: linear-gradient(145deg, #edf1e8, #f5f3eb 62%, #e9eee5); }
+.glass-panel { border-color: rgba(64, 83, 69, .17); background: linear-gradient(135deg, rgba(255,253,247,.95), rgba(242,239,228,.98)); box-shadow: 0 20px 55px rgba(53, 68, 48, .09), inset 0 1px rgba(255,255,255,.9); }
+.story-scene { color: #293d36; }
+.online-label { color: #53795e; }
+.chat-drawer { max-height: min(680px, calc(100dvh - 120px)); }
+body:has(.chat-drawer) .chat-beacon-note { display: none; }
+@media (max-width: 560px) { .chat-drawer { max-height: calc(100dvh - 100px); } }
+
+/* Photoreal route-local motion sits beneath a live, transparent WebGL accent layer. */
+.story-scene-photoreal { isolation: isolate; background: #e8eee6; }
+.story-photoreal-video { position: absolute; inset: 0; z-index: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 43%; background: #e8eee6; }
+.story-scene-photoreal canvas.story-photoreal-overlay { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; background: transparent; pointer-events: none; }
+.deep-scene-wrap:has(.story-scene-photoreal) { background: radial-gradient(ellipse at 50% 45%, #f5f4ec, #e5ece3 100%); }
+.deep-scene-wrap:has(.story-scene-photoreal) .scene-corner-label { color: #33483d; text-shadow: 0 1px 4px rgba(255,253,247,.75); }
+.deep-scene-wrap:has(.story-scene-photoreal) .scene-corner-label span:first-child { color: #85663a; }
+.deep-story:not(.deep-story-diagnostics) .deep-hero { min-height: clamp(420px, 44vw, 600px); grid-template-columns: minmax(310px, .83fr) minmax(0, 1.17fr); }
+.deep-story:not(.deep-story-diagnostics) .deep-hero-copy { padding-block: clamp(32px, 4.5vw, 60px); }
+.deep-story:not(.deep-story-diagnostics) .deep-hero h1 { margin-block: 17px; font-size: clamp(39px, 4.4vw, 65px); }
+.deep-story:not(.deep-story-diagnostics) .deep-context { margin-top: clamp(20px, 2.6vw, 34px); }
+.chat-direction-guide path { stroke: #9a7a47; stroke-opacity: .84; }
+.chat-direction-guide marker path { stroke: #9a7a47; }
+@media (max-width: 820px) {
+  .deep-story:not(.deep-story-diagnostics) .deep-hero { min-height: 0; }
+  .deep-story:not(.deep-story-diagnostics) .deep-scene-wrap { height: auto; min-height: 0; aspect-ratio: 16 / 9; }
+  .deep-story:not(.deep-story-diagnostics) .deep-hero-copy { padding-block: 36px; }
+}
+@media (max-width: 560px) {
+  .deep-story:not(.deep-story-diagnostics) .deep-scene-wrap { height: auto; min-height: 0; aspect-ratio: 16 / 9; }
+  .deep-story:not(.deep-story-diagnostics) .deep-hero-copy { padding-block: 31px; }
+}
+
+/* Preserve the complete family-home composition at every viewport ratio. */
+.story-photoreal-video { object-fit: contain; }
+@media (min-width: 821px) { .deep-story:not(.deep-story-diagnostics) .deep-scene-wrap { min-height: 0; } }

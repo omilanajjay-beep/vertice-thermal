@@ -21,6 +21,8 @@ test('the five requested deep URLs are separate App Router pages with unique sce
   for (const route of ['/equipment/diagnostics.html', '/service/emergency-repair.html', '/case-studies/comfort-restored.html', '/company/verified-reviews.html', '/booking/secure-dispatch.html']) {
     assert.ok(home.includes(route));
   }
+  assert.equal((home.match(/<StoryScene\s/g) || []).length, 1, 'the selected page mounts one current scene, not all five stages');
+  assert.equal((home.match(/<section className="deep-hero"/g) || []).length, 1, 'each route renders one page hero');
   assert.ok(read('app/page.tsx').includes("redirect('/equipment/diagnostics.html')"));
 });
 
@@ -62,4 +64,29 @@ test('the reviews page contains the five supplied review records without invente
   }
   assert.equal((reviews.match(/id: '/g) || []).length, 5);
   assert.ok(read('app/components/StoryPage.tsx').includes('homeownerReviews.map'));
+});
+
+test('all five story routes use a warm light page theme and matching bright 3D environments', () => {
+  const styles = read('app/globals.css');
+  const scene = read('app/components/StoryScene.tsx');
+  assert.match(styles, /color-scheme:\s*light;/);
+  assert.match(styles, /--page-background:\s*#f7f5ef;/);
+  assert.match(styles, /background:\s*var\(--page-background\);/);
+  assert.ok(styles.includes('background: #fffdf8;'));
+  assert.match(scene, /const backdrop\s*=\s*step === 'repair' \?/);
+  assert.match(scene, /'#f7f4ed'/);
+  assert.match(scene, /'#e9f2ee'/);
+});
+
+test('each separate narrative page uses its own photoreal motion asset and one transparent WebGL stage', () => {
+  const scene = read('app/components/StoryScene.tsx');
+  for (const [route, asset] of [['repair', 'room-repair'], ['comfort', 'room-comfort'], ['reviews', 'room-reviews'], ['booking', 'room-dispatch']]) {
+    assert.ok(scene.includes(`${route}: { src: '/video/${asset}.mp4'`), `${route} page has its own motion file`);
+    assert.ok(scene.includes(`poster: '/video/${asset}-poster.jpg'`), `${route} page has its own still fallback`);
+  }
+  assert.match(scene, /<video className="story-photoreal-video"/);
+  assert.match(scene, /alpha: Boolean\(motionSource\)/);
+  assert.match(scene, /addSunlitDust\(scene/);
+  const page = read('app/components/StoryPage.tsx');
+  assert.equal((page.match(/<StoryScene\s/g) || []).length, 1, 'each URL shows only its own scene rather than five stacked videos');
 });

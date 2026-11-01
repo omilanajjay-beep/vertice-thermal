@@ -7,6 +7,15 @@ import type { HomeownerReview } from '../lib/reviews';
 
 export type StoryStep = 'diagnostics' | 'repair' | 'comfort' | 'reviews' | 'booking';
 
+type PhotorealMotion = { src: string; poster: string };
+
+const motionSources: Partial<Record<StoryStep, PhotorealMotion>> = {
+  repair: { src: '/video/room-repair.mp4', poster: '/video/room-repair-poster.jpg' },
+  comfort: { src: '/video/room-comfort.mp4', poster: '/video/room-comfort-poster.jpg' },
+  reviews: { src: '/video/room-reviews.mp4', poster: '/video/room-reviews-poster.jpg' },
+  booking: { src: '/video/room-dispatch.mp4', poster: '/video/room-dispatch-poster.jpg' },
+};
+
 type CharacterRig = {
   root: THREE.Group;
   body: THREE.Group;
@@ -137,40 +146,40 @@ function makeReviewTexture(review: HomeownerReview) {
   if (!context) return new THREE.CanvasTexture(canvas);
   context.clearRect(0, 0, canvas.width, canvas.height);
   const background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-  background.addColorStop(0, 'rgba(31,39,39,.97)');
-  background.addColorStop(1, 'rgba(17,22,23,.98)');
+  background.addColorStop(0, 'rgba(255,253,247,.98)');
+  background.addColorStop(1, 'rgba(240,234,221,.98)');
   context.fillStyle = background;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.strokeStyle = 'rgba(217,199,165,.58)';
+  context.strokeStyle = 'rgba(156,126,76,.5)';
   context.lineWidth = 4;
   context.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
-  context.fillStyle = '#d1b587';
+  context.fillStyle = '#856b42';
   context.font = '500 22px Arial, sans-serif';
   context.fillText('HOMEOWNER NOTE  /  VERIFIED VISIT', 62, 86);
-  context.fillStyle = '#e9c982';
+  context.fillStyle = '#ad8748';
   context.font = 'bold 40px Georgia, serif';
   context.fillText('★★★★★', 60, 155);
-  context.fillStyle = '#f0ede3';
+  context.fillStyle = '#31463d';
   context.font = '600 42px Georgia, serif';
   const titleLines = wrapText(context, review.headline, 970, 2);
   titleLines.forEach((line, index) => context.fillText(line, 62, 231 + index * 54));
-  context.fillStyle = 'rgba(214,220,211,.8)';
+  context.fillStyle = 'rgba(66,83,73,.88)';
   context.font = '400 25px Arial, sans-serif';
   const excerpt = review.body.length > 184 ? `${review.body.slice(0, 181).trimEnd()}…` : review.body;
   const excerptLines = wrapText(context, excerpt, 970, 4);
   excerptLines.forEach((line, index) => context.fillText(line, 62, 370 + index * 39));
-  context.strokeStyle = 'rgba(238,233,223,.18)';
+  context.strokeStyle = 'rgba(70,86,74,.22)';
   context.beginPath();
   context.moveTo(62, 570);
   context.lineTo(1038, 570);
   context.stroke();
-  context.fillStyle = '#f0ede3';
+  context.fillStyle = '#31463d';
   context.font = '600 27px Arial, sans-serif';
   context.fillText(review.name, 62, 632);
-  context.fillStyle = '#d1b587';
+  context.fillStyle = '#826b46';
   context.font = '400 21px Arial, sans-serif';
   context.fillText(`${review.location}  /  ${review.displayDate}`, 62, 680);
-  context.fillStyle = '#8fbaa5';
+  context.fillStyle = '#557c68';
   context.font = '500 17px Arial, sans-serif';
   context.fillText(review.category.toUpperCase(), 62, 724);
   const texture = new THREE.CanvasTexture(canvas);
@@ -287,16 +296,16 @@ function addWallUnit(parent: THREE.Object3D, x: number, y: number, z: number, li
 }
 
 function addSofa(parent: THREE.Object3D) {
-  const base = makeStandard('#89796b', 0.86, 0.02);
-  const cushion = makeStandard('#b2a28f', 0.94, 0);
-  const accent = makeStandard('#d4c4aa', 0.94, 0);
+  const base = makeStandard('#a5917c', 0.86, 0.02);
+  const cushion = makeStandard('#e0d3bf', 0.94, 0);
+  const accent = makeStandard('#eee2cf', 0.94, 0);
   addBox(parent, 2.25, 0.38, 0.94, base, new THREE.Vector3(0.86, 0.55, 0.77));
   addBox(parent, 2.25, 0.84, 0.23, base, new THREE.Vector3(0.86, 0.95, 0.33));
   addBox(parent, 0.28, 0.68, 0.91, base, new THREE.Vector3(-0.26, 0.77, 0.72));
   addBox(parent, 0.28, 0.68, 0.91, base, new THREE.Vector3(1.98, 0.77, 0.72));
   addBox(parent, 1.74, 0.15, 0.68, cushion, new THREE.Vector3(0.86, 0.78, 0.87));
   addBox(parent, 0.66, 0.38, 0.12, accent, new THREE.Vector3(0.33, 1.13, 0.46));
-  addBox(parent, 0.66, 0.38, 0.12, makeStandard('#9cafa8', 0.94, 0), new THREE.Vector3(1.32, 1.13, 0.46));
+  addBox(parent, 0.66, 0.38, 0.12, makeStandard('#b9c8bc', 0.94, 0), new THREE.Vector3(1.32, 1.13, 0.46));
   for (const x of [-0.08, 1.8]) {
     addCylinder(parent, 0.045, 0.06, 0.42, makeStandard('#51473d', 0.58, 0.06), new THREE.Vector3(x, 0.23, 0.46), 10);
   }
@@ -317,11 +326,11 @@ function addPlant(parent: THREE.Object3D, x: number, z: number) {
 function addRoom(scene: THREE.Scene, isWarm: boolean) {
   const room = new THREE.Group();
   scene.add(room);
-  const floor = makeStandard('#b99368', 0.83, 0.02);
-  const wall = makeStandard('#d4d5ce', 0.93, 0.01);
-  const trim = makeStandard('#ece9df', 0.79, 0.02);
-  const darkTrim = makeStandard('#5b5750', 0.77, 0.02);
-  const rug = makeStandard('#d7d0c1', 0.98, 0);
+  const floor = makeStandard('#ddc7a4', 0.83, 0.02);
+  const wall = makeStandard('#f5f1e7', 0.93, 0.01);
+  const trim = makeStandard('#fffaf0', 0.79, 0.02);
+  const darkTrim = makeStandard('#756859', 0.77, 0.02);
+  const rug = makeStandard('#eee8db', 0.98, 0);
   const screen = new THREE.MeshStandardMaterial({ color: isWarm ? '#6b3932' : '#19363b', emissive: isWarm ? '#a7372a' : '#2d9ca6', emissiveIntensity: isWarm ? 0.72 : 0.5, roughness: 0.25 });
   const wallSignal = new THREE.MeshStandardMaterial({ color: isWarm ? '#ff8872' : '#9be7ed', emissive: isWarm ? '#e84d38' : '#49bdce', emissiveIntensity: 1.5 });
 
@@ -333,11 +342,11 @@ function addRoom(scene: THREE.Scene, isWarm: boolean) {
   addBox(room, 1.88, 0.09, 1.3, rug, new THREE.Vector3(0.95, 0.014, 0.43), { castShadow: false });
 
   for (let index = 0; index < 12; index += 1) {
-    const plank = addBox(room, 0.57, 0.012, 5.55, makeStandard(index % 2 ? '#c09a70' : '#ae875e', 0.88, 0), new THREE.Vector3(-3.34 + index * 0.61, 0.009, 0), { castShadow: false, receiveShadow: true });
+    const plank = addBox(room, 0.57, 0.012, 5.55, makeStandard(index % 2 ? '#d8ba91' : '#cbaa7c', 0.88, 0), new THREE.Vector3(-3.34 + index * 0.61, 0.009, 0), { castShadow: false, receiveShadow: true });
     plank.position.y = 0.008;
   }
   for (let index = 0; index < 6; index += 1) {
-    addBox(room, 7.5, 0.008, 0.016, makeStandard('#9c7652', 0.93, 0), new THREE.Vector3(0, 0.018, -2.26 + index * 0.91), { castShadow: false, receiveShadow: false });
+    addBox(room, 7.5, 0.008, 0.016, makeStandard('#b28e65', 0.93, 0), new THREE.Vector3(0, 0.018, -2.26 + index * 0.91), { castShadow: false, receiveShadow: false });
   }
 
   addWindow(room, 2.38, 2.05, -2.77);
@@ -508,13 +517,43 @@ function addSparks(scene: THREE.Scene) {
   };
 }
 
+function addSunlitDust(scene: THREE.Scene, count: number) {
+  const positions = new Float32Array(count * 3);
+  const origins: Array<[number, number, number]> = [];
+  const phases: number[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const x = ((index * 37) % 101) / 100 * 4.8 - 2.4;
+    const y = ((index * 61) % 97) / 96 * 3.6 - 1.8;
+    const z = 1.2 + ((index * 43) % 89) / 88 * 2.3;
+    origins.push([x, y, z]);
+    phases.push((index * 2.399) % (Math.PI * 2));
+    positions.set([x, y, z], index * 3);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({ color: '#fff8e7', size: 0.036, transparent: true, opacity: 0.28, depthWrite: false, sizeAttenuation: true });
+  const motes = new THREE.Points(geometry, material);
+  motes.frustumCulled = false;
+  scene.add(motes);
+  return (time: number) => {
+    for (let index = 0; index < count; index += 1) {
+      const [x, y, z] = origins[index];
+      const phase = phases[index];
+      positions[index * 3] = x + Math.sin(time * 0.22 + phase) * 0.045;
+      positions[index * 3 + 1] = y + Math.cos(time * 0.19 + phase) * 0.07;
+      positions[index * 3 + 2] = z + Math.sin(time * 0.16 + phase) * 0.035;
+    }
+    geometry.attributes.position.needsUpdate = true;
+  };
+}
+
 function addReviewBoard(scene: THREE.Scene, review: HomeownerReview) {
   const board = new THREE.Group();
   board.position.set(2.44, 1.8, -1.52);
   board.rotation.y = -0.18;
   scene.add(board);
-  const glass = new THREE.MeshStandardMaterial({ color: '#16201f', roughness: 0.28, metalness: 0.36, transparent: true, opacity: 0.91, emissive: '#17221f', emissiveIntensity: 0.2 });
-  const gold = makeStandard('#d2ad70', 0.16, 0.92);
+  const glass = new THREE.MeshStandardMaterial({ color: '#fffaf0', roughness: 0.26, metalness: 0.08, transparent: true, opacity: 0.94, emissive: '#f7f2e6', emissiveIntensity: 0.3 });
+  const gold = makeStandard('#c8a66c', 0.22, 0.42);
   addBox(board, 2.4, 1.66, 0.095, glass, new THREE.Vector3(0, 0, 0));
   const texture = makeReviewTexture(review);
   const face = new THREE.Mesh(new THREE.PlaneGeometry(2.25, 1.54), new THREE.MeshBasicMaterial({ map: texture, transparent: false }));
@@ -530,7 +569,12 @@ function addReviewBoard(scene: THREE.Scene, review: HomeownerReview) {
   return board;
 }
 
-function setupRoomScene(scene: THREE.Scene, step: StoryStep, review: HomeownerReview) {
+function setupRoomScene(scene: THREE.Scene, step: StoryStep, review: HomeownerReview, photorealMotion: boolean) {
+  if (photorealMotion) {
+    const updateDust = addSunlitDust(scene, step === 'reviews' ? 20 : 34);
+    return { rigs: [] as CharacterRig[], update: updateDust };
+  }
+
   const warm = step === 'repair';
   addRoom(scene, warm);
   const rigs: CharacterRig[] = [];
@@ -596,7 +640,7 @@ function setupRoomScene(scene: THREE.Scene, step: StoryStep, review: HomeownerRe
 function addDiagnosticPedestal(scene: THREE.Scene) {
   const ground = new THREE.Mesh(
     new THREE.CircleGeometry(4.2, 96),
-    new THREE.MeshStandardMaterial({ color: '#161a1c', roughness: 0.48, metalness: 0.42, transparent: true, opacity: 0.78 }),
+    new THREE.MeshStandardMaterial({ color: '#e8e2d5', roughness: 0.55, metalness: 0.08, transparent: true, opacity: 0.82 }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -1.28;
@@ -604,7 +648,7 @@ function addDiagnosticPedestal(scene: THREE.Scene) {
   scene.add(ground);
   const pedestal = new THREE.Mesh(
     new THREE.CylinderGeometry(1.2, 1.45, 0.22, 80),
-    makeStandard('#41464a', 0.2, 0.82),
+    makeStandard('#c8b892', 0.22, 0.42),
   );
   pedestal.position.y = -1.22;
   pedestal.castShadow = true;
@@ -623,6 +667,7 @@ function addDiagnosticPedestal(scene: THREE.Scene) {
 export default function StoryScene({ step, review }: { step: StoryStep; review: HomeownerReview }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [webglUnavailable, setWebglUnavailable] = useState(false);
+  const motionSource = motionSources[step] ?? null;
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -643,14 +688,19 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
     const projectedHandPosition = new THREE.Vector3();
     const reviewSweepOffset = new THREE.Vector3(1.1, 0.25, -0.7);
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(step === 'repair' ? '#321a1c' : '#121719');
-    scene.fog = new THREE.Fog(step === 'repair' ? '#30191a' : '#121719', 14, 28);
+    const backdrop = step === 'repair' ? '#f5e4dc' : step === 'diagnostics' ? '#f7f4ed' : '#e9f2ee';
+    const backgroundVideo = mount.querySelector<HTMLVideoElement>('.story-photoreal-video');
+    scene.background = motionSource ? null : new THREE.Color(backdrop);
+    scene.fog = motionSource ? null : new THREE.Fog(backdrop, 14, 28);
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 70);
     let cameraBasePosition = new THREE.Vector3(7.15, 5.25, 8.2);
     let cameraTarget = new THREE.Vector3(0, 0.85, 0);
     if (step === 'diagnostics') {
       cameraBasePosition = new THREE.Vector3(0, 2.1, 10.8);
       cameraTarget = new THREE.Vector3(0, 0.7, 0);
+    } else if (motionSource) {
+      cameraBasePosition = new THREE.Vector3(0, 0, 10);
+      cameraTarget = new THREE.Vector3(0, 0, 0);
     } else if (step === 'reviews') {
       cameraBasePosition = new THREE.Vector3(7.05, 5.35, 8.05);
       cameraTarget = new THREE.Vector3(0.3, 0.88, -0.03);
@@ -658,9 +708,9 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
     camera.position.copy(cameraBasePosition);
     camera.lookAt(cameraTarget);
 
-    const ambient = new THREE.HemisphereLight(step === 'repair' ? '#f6b5a0' : '#c5e9e9', '#34302a', step === 'repair' ? 1.45 : 1.15);
+    const ambient = new THREE.HemisphereLight(step === 'repair' ? '#ffd0bd' : '#fffaf0', '#999080', step === 'repair' ? 1.9 : 1.65);
     scene.add(ambient);
-    const key = new THREE.DirectionalLight(step === 'repair' ? '#ffd0a5' : '#fff3d9', 2.35);
+    const key = new THREE.DirectionalLight(step === 'repair' ? '#ffddc2' : '#fff8e8', 2.4);
     key.position.set(-4.6, 8.2, 5.1);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
@@ -670,23 +720,32 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
     key.shadow.camera.bottom = -5;
     key.shadow.bias = -0.00018;
     scene.add(key);
-    const fill = new THREE.DirectionalLight(step === 'repair' ? '#e26754' : '#79d6e4', step === 'repair' ? 1.5 : 1.22);
+    const fill = new THREE.DirectionalLight(step === 'repair' ? '#df7563' : '#93d5d0', step === 'repair' ? 0.85 : 0.95);
     fill.position.set(5.5, 3.5, 2.4);
     scene.add(fill);
-    const rim = new THREE.PointLight(step === 'repair' ? '#ed6048' : '#94e8e8', step === 'repair' ? 3.4 : 2.4, 16, 2);
+    const rim = new THREE.PointLight(step === 'repair' ? '#e87763' : '#a2ded9', step === 'repair' ? 1.7 : 1.35, 16, 2);
     rim.position.set(-2.6, 3.9, -2.3);
     scene.add(rim);
+    const onMotionPreferenceChange = (event: MediaQueryListEvent) => {
+      prefersReducedMotion = event.matches;
+      if (event.matches) backgroundVideo?.pause();
+      else void backgroundVideo?.play().catch(() => undefined);
+    };
+    reducedMotionQuery.addEventListener('change', onMotionPreferenceChange);
+    if (prefersReducedMotion) backgroundVideo?.pause();
+    else void backgroundVideo?.play().catch(() => undefined);
 
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: Boolean(motionSource), powerPreference: 'high-performance' });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 0.92;
-      renderer.setClearColor(step === 'repair' ? 0x321a1c : 0x121719, 1);
+      renderer.toneMappingExposure = 1.02;
+      renderer.setClearColor(motionSource ? 0x000000 : backdrop, motionSource ? 0 : 1);
       renderer.domElement.setAttribute('aria-hidden', 'true');
+      if (motionSource) renderer.domElement.className = 'story-photoreal-overlay';
       mount.appendChild(renderer.domElement);
       const pmrem = new THREE.PMREMGenerator(renderer);
       const roomEnvironment = new RoomEnvironment();
@@ -702,12 +761,13 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
         topLight.target.position.set(0, 0.5, 0);
         scene.add(topLight, topLight.target);
       } else {
-        roomUpdater = setupRoomScene(scene, step, review);
+        roomUpdater = setupRoomScene(scene, step, review, Boolean(motionSource));
       }
       setWebglUnavailable(false);
     } catch {
       setWebglUnavailable(true);
       return () => {
+        reducedMotionQuery.removeEventListener('change', onMotionPreferenceChange);
         renderer?.dispose();
         renderer?.forceContextLoss();
       };
@@ -790,9 +850,6 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
       if (active) beginRendering();
       else stopRendering();
     };
-    const onMotionPreferenceChange = (event: MediaQueryListEvent) => {
-      prefersReducedMotion = event.matches;
-    };
     const onBeforeUnload = () => flushResources();
 
     resizeObserver = new ResizeObserver(resize);
@@ -803,7 +860,6 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
       else stopRendering();
     }, { threshold: 0.02 });
     intersectionObserver.observe(mount);
-    reducedMotionQuery.addEventListener('change', onMotionPreferenceChange);
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('beforeunload', onBeforeUnload);
     resize();
@@ -822,17 +878,18 @@ export default function StoryScene({ step, review }: { step: StoryStep; review: 
   }, [step, review]);
 
   const sceneDescriptions: Record<StoryStep, string> = {
-    diagnostics: 'A metallic digital HVAC manifold gauge floats above an illuminated pedestal, rotating slowly in a dark studio.',
-    repair: 'A warm isometric living room in red light, with a technician working at an HVAC console and small repair sparks.',
-    comfort: 'The same isometric living room in cool blue light, with a smiling family and technician as gentle airflow moves through the room.',
-    reviews: 'The family and technician in the cooled living room beside a glass review board with a five-star homeowner note.',
-    booking: 'A smiling technician with a metallic toolbox points toward the real booking chat button.',
+    diagnostics: 'A metallic digital HVAC manifold gauge floats above an illuminated pedestal, rotating slowly in a bright warm-white studio.',
+    repair: 'Photoreal moving footage of the same friendly technician inspecting a home HVAC system in a bright family living room.',
+    comfort: 'Photoreal moving footage of a family relaxing with the same technician after restoring comfort in their bright home.',
+    reviews: 'Photoreal moving footage of the same family and technician sharing a grateful, relaxed moment in their bright home.',
+    booking: 'Photoreal moving footage of the same technician inviting the homeowner toward the live booking concierge.',
   };
 
-  const handAnchor = step === 'booking' ? { '--hand-x': '64%', '--hand-y': '48%' } as CSSProperties : undefined;
+  const handAnchor = step === 'booking' ? { '--hand-x': motionSource ? '86%' : '64%', '--hand-y': motionSource ? '60%' : '48%' } as CSSProperties : undefined;
 
-  return <div ref={mountRef} className={`story-scene story-scene-${step} ${step === 'booking' ? 'comfort-story-scene' : ''}`} style={handAnchor} role="img" aria-label={sceneDescriptions[step]}>
-    {webglUnavailable && <div className="scene-fallback"><span>VERTICE / {step.toUpperCase()}</span><strong>Comfort, considered.</strong><small>Interactive scene unavailable on this device.</small></div>}
+  return <div ref={mountRef} className={`story-scene story-scene-${step} ${motionSource ? 'story-scene-photoreal' : ''} ${step === 'booking' ? 'comfort-story-scene' : ''}`} style={handAnchor} role="img" aria-label={sceneDescriptions[step]}>
+    {motionSource && <video className="story-photoreal-video" src={motionSource.src} poster={motionSource.poster} loop muted playsInline preload="metadata" aria-hidden="true" tabIndex={-1} />}
+    {webglUnavailable && !motionSource && <div className="scene-fallback"><span>VERTICE / {step.toUpperCase()}</span><strong>Comfort, considered.</strong><small>Interactive scene unavailable on this device.</small></div>}
     <span className="scene-screen-reader">{sceneDescriptions[step]}</span>
   </div>;
 }

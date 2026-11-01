@@ -16,9 +16,13 @@ The root and retired shallow story URLs redirect into this deep-route journey. T
 
 `app/components/StoryPage.tsx` contains the route-local editorial layouts and story navigation. `app/components/StoryScene.tsx` builds the procedural Three.js scenes; no attached reference images are deployed. The room builder is shared so its layout remains the same across the repair, comfort, review and booking states. Each mounted scene initializes its own antialiased renderer with capped retina density, soft shadows, responsive camera fitting, visibility-aware animation and reduced-motion support. Scene resources are disposed on unmount and before window unload.
 
+The diagnostics route keeps its reflective rotating Three.js manifold gauge. Repair, comfort, verified-reviews and secure-dispatch each use their own short, silent photoreal motion scene with the same reference cast and light-filled home. The reviews scene uses a slow camera drift across a high-resolution still, avoiding unstable face and hand motion; all four scenes have lightweight still posters. A transparent, animated WebGL dust-mote layer remains active over the footage. Reduced-motion preference pauses both video and scene movement, and the one-scene-per-route page architecture is unchanged.
+
+The shared theme is warm daylight: ivory page surfaces, soft sage, natural wood, restrained brass and deep-green text. Navigation, review cards, booking panels, mobile menus and the open concierge all use the same bright surface system. Only the selected route's scene and content render, never five concatenated story stages on one long page.
+
 ## Shared booking
 
-`app/components/SiteShell.tsx` retains one persistent `Concierge` instance across route changes. The launcher remains fixed above the canvases; the final route adds a click-through guide and cyan spotlight. Booking and notification code is unchanged: `/api/concierge` handles intake, `/api/slots` reads Cal.com availability, and `/api/book` verifies the slot before booking and sending separate SendGrid emails to the homeowner and dispatch. Secrets remain environment-only.
+`app/components/SiteShell.tsx` retains one persistent `Concierge` instance across route changes. The launcher remains fixed above the canvases; the final route adds a click-through guide and soft sage-and-brass spotlight. Booking and notification code is unchanged: `/api/concierge` handles intake, `/api/slots` reads Cal.com availability, and `/api/book` verifies the slot before booking and sending separate SendGrid emails to the homeowner and dispatch. Secrets remain environment-only.
 
 ## Reviews and verification
 
