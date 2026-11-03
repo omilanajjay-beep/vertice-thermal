@@ -361,8 +361,22 @@ export default function Hero3D() {
       if (reducedMotion) camera.position.copy(cameraGoalRef.current);
       else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.2));
       if (!reducedMotion) {
-        rotor.rotation.z = Math.sin(elapsed * (mobile ? 0.9 : 1.15)) * 0.045;
-        rotor.position.y = fanCenter.y + Math.sin(elapsed * 1.8) * 0.018;
+        const idle = Math.sin(elapsed * (mobile ? 1.15 : 1.35));
+        const breath = Math.sin(elapsed * 1.8) * 0.5 + 0.5;
+        const pointerX = mobile ? 0 : pointer.x;
+        const pointerY = mobile ? 0 : pointer.y;
+        rotor.position.x = fanCenter.x + pointerX * 0.025;
+        rotor.position.y = fanCenter.y + idle * 0.014 + pointerY * 0.025;
+        rotor.rotation.z = idle * 0.04 + pointerX * 0.02;
+        rotor.rotation.y = pointerX * 0.05;
+        rotor.rotation.x = -pointerY * 0.03;
+        technicianBody.scale.y = 1 + breath * 0.018;
+        head.rotation.z = idle * 0.035 - pointerX * 0.04;
+        head.rotation.x = pointerY * 0.045;
+        arm.rotation.z = -0.72 + Math.sin(elapsed * 1.6 + 0.5) * 0.07;
+        hand.position.y = -0.27 + Math.sin(elapsed * 1.6 + 0.5) * 0.01;
+        toolbox.position.y = -0.43 + Math.sin(elapsed * 1.6 + 0.5) * 0.012;
+        toolbox.rotation.z = Math.sin(elapsed * 1.6 + 0.5) * 0.035;
         warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18;
       }
       ledRefs.current.forEach(({ led, glow }, index) => {
