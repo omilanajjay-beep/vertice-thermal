@@ -10,7 +10,6 @@ import {
   Check,
   ChevronRight,
   Clock3,
-  Fan,
   MapPin,
   Menu,
   MessageCircle,
@@ -244,7 +243,7 @@ export default function Home() {
     <section className="section system-section" id="system">
       <div className="section-heading" data-reveal><span className="eyebrow">01 / THE SYSTEM</span><h2>Engineering you<br /><i>feel, not hear.</i></h2><p>Every component has a role in the whole: steady output, clean airflow and a system that can be understood and serviced over time.</p></div>
       <div className="feature-stack">
-        <article className="feature-row" data-reveal><span className="feature-index">01</span><div className="feature-icon"><Fan size={19} /></div><div><h3>AeroBlade fan</h3><p>Airflow shaped to move efficiently and keep the outdoor unit visually composed.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
+        <article className="feature-row" data-reveal><span className="feature-index">01</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>On-site craftsmanship</h3><p>A qualified technician, equipped to assess the home and keep the system performing beautifully.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
         <article className="feature-row" data-reveal><span className="feature-index">02</span><div className="feature-icon"><Snowflake size={19} /></div><div><h3>Inverter compressor</h3><p>Output modulates with demand instead of cycling at a single fixed rate.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
         <article className="feature-row" data-reveal><span className="feature-index">03</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>Copper core exchanger</h3><p>A considered thermal pathway, designed for dependable service access.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
         <div className="system-note"><ShieldCheck size={15} /><span>Performance and equipment selection depend on the property, climate and a proper site assessment.</span></div>
