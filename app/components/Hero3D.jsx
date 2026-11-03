@@ -5,9 +5,9 @@ import { gsap } from 'gsap';
 import * as THREE from 'three';
 
 const HOTSPOTS = [
-  { id: 'compressor', label: 'Inverter compressor', note: 'Variable output', left: '12%', top: '62%', anchor: [-1.02, 0.16, 0.78], camera: [-3.0, 1.65, 5.5], target: [-0.82, 0.18, 0.12] },
-  { id: 'technician', label: 'Field technician', note: 'Smiling service specialist', left: '55%', top: '30%', anchor: [-0.15, 0.16, 1.02], camera: [0.65, 1.55, 4.35], target: [0.0, 0.18, 0.62] },
-  { id: 'exchanger', label: 'Copper core exchanger', note: 'Thermal exchange', left: '70%', top: '62%', anchor: [0.92, 0.1, 0.58], camera: [3.0, 1.55, 4.9], target: [0.92, 0.1, 0.48] },
+  { id: 'home-visit', label: 'Home service visit', note: 'Professional on-site care', left: '18%', top: '28%', anchor: [-1.2, 0.55, 1.0], camera: [-0.35, 1.3, 5.4], target: [0, 0.1, 0.4] },
+  { id: 'service-crew', label: 'Service crew', note: 'Ready for the next call', left: '55%', top: '30%', anchor: [0.0, 0.72, 1.02], camera: [0.45, 1.45, 4.8], target: [0.0, 0.15, 0.45] },
+  { id: 'toolbox', label: 'Tool-ready support', note: 'Equipped for the job', left: '78%', top: '65%', anchor: [1.22, -0.35, 1.0], camera: [0.8, 0.9, 4.9], target: [0.15, -0.1, 0.5] },
 ];
 
 function createSlateTexture() {
@@ -121,9 +121,8 @@ export default function Hero3D() {
   const pointerRef = useRef(new THREE.Vector2());
   const hotspotRefs = useRef({});
   const reducedMotionRef = useRef(false);
-  const technicianRef = useRef(null);
   const ledRefs = useRef([]);
-  const [active, setActive] = useState('technician');
+  const [active, setActive] = useState('service-crew');
 
   useEffect(() => {
     if (!mountRef.current) return undefined;
@@ -241,55 +240,34 @@ export default function Hero3D() {
     compressor.add(compressorRing);
     scene.add(compressor);
 
-    // Stylized 3D service technician replacing the original previous equipment visual.
-    const technicianOrigin = new THREE.Vector3(-0.15, 0.16, 0.86);
-    const technician = new THREE.Group();
-    technician.position.copy(technicianOrigin).setZ(technicianOrigin.z + 0.12);
-    technician.scale.setScalar(1.35);
-    const technicianSkin = new THREE.MeshStandardMaterial({ color: '#c9825c', roughness: 0.72 });
-    const technicianShirt = new THREE.MeshStandardMaterial({ color: '#2364a5', roughness: 0.55, metalness: 0.08 });
-    const technicianPants = new THREE.MeshStandardMaterial({ color: '#202326', roughness: 0.75 });
-    const toolboxMaterial = new THREE.MeshStandardMaterial({ color: '#f59e0b', roughness: 0.42, metalness: 0.32 });
-    const faceMaterial = new THREE.MeshBasicMaterial({ color: '#171819' });
-    const technicianBody = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.32, 0.68, 18), technicianShirt);
-    technicianBody.position.y = -0.10;
-    technician.add(technicianBody);
-    [-0.11, 0.11].forEach((x) => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.47, 12), technicianPants);
-      leg.position.set(x, -0.67, 0);
-      technician.add(leg);
-    });
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.23, 24, 18), technicianSkin);
-    head.position.set(0, 0.42, 0.01);
-    technician.add(head);
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.245, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), technicianShirt);
-    cap.position.set(0, 0.54, 0.01);
-    technician.add(cap);
-    [-0.065, 0.065].forEach((x) => {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 10, 10), faceMaterial);
-      eye.position.set(x, 0.44, 0.22);
-      technician.add(eye);
-    });
-    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 18, Math.PI), faceMaterial);
-    smile.position.set(0, 0.35, 0.22);
-    smile.rotation.z = Math.PI;
-    technician.add(smile);
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.38, 12), technicianShirt);
-    arm.position.set(0.36, -0.05, 0.02);
-    arm.rotation.z = -0.72;
-    technician.add(arm);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 12), technicianSkin);
-    hand.position.set(0.52, -0.34, 0.04);
-    technician.add(hand);
-    const toolbox = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.28, 0.27), toolboxMaterial);
-    toolbox.position.set(0.54, -0.50, 0.05);
-    technician.add(toolbox);
-    const toolboxHandle = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 18, Math.PI), grilleMaterial);
-    toolboxHandle.position.set(0.54, -0.33, 0.05);
-    toolboxHandle.rotation.z = Math.PI;
-    technician.add(toolboxHandle);
-    scene.add(technician);
-    technicianRef.current = technician;
+    // Supplied service photograph presented as a layered 3D hero card.
+    const photoStage = new THREE.Group();
+    const photoOrigin = new THREE.Vector3(0, 0.15, 1.05);
+    photoStage.position.copy(photoOrigin);
+    photoStage.scale.setScalar(1.08);
+    const photoFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(5.05, 2.9, 0.08),
+      new THREE.MeshStandardMaterial({ color: '#0b1723', roughness: 0.52, metalness: 0.34 }),
+    );
+    photoFrame.position.z = -0.06;
+    photoStage.add(photoFrame);
+    const photoShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.2, 3.02),
+      new THREE.MeshBasicMaterial({ color: '#00a8ff', transparent: true, opacity: 0.08, side: THREE.DoubleSide }),
+    );
+    photoShadow.position.set(0.04, -0.04, -0.11);
+    photoStage.add(photoShadow);
+    const photoTexture = new THREE.TextureLoader().load('/service-technician.jpeg');
+    photoTexture.colorSpace = THREE.SRGBColorSpace;
+    photoTexture.anisotropy = 8;
+    const photoCard = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.82, 2.63),
+      new THREE.MeshBasicMaterial({ map: photoTexture, toneMapped: false, side: THREE.DoubleSide }),
+    );
+    photoCard.position.z = 0.02;
+    photoStage.add(photoCard);
+    scene.add(photoStage);
+    const photoRef = { stage: photoStage, card: photoCard, frame: photoFrame };
 
     // Restrained warm status emblem, with no printed branding or text.
     const ledMaterial = new THREE.MeshBasicMaterial({ color: '#d9e7cf' });
@@ -362,22 +340,17 @@ export default function Hero3D() {
       if (reducedMotion) camera.position.copy(cameraGoalRef.current);
       else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.2));
       if (!reducedMotion) {
-        const idle = Math.sin(elapsed * (mobile ? 1.15 : 1.35));
-        const breath = Math.sin(elapsed * 1.8) * 0.5 + 0.5;
+        const idle = Math.sin(elapsed * (mobile ? 0.72 : 0.92));
         const pointerX = mobile ? 0 : pointer.x;
         const pointerY = mobile ? 0 : pointer.y;
-        technician.position.x = technicianOrigin.x + pointerX * 0.025;
-        technician.position.y = technicianOrigin.y + idle * 0.014 + pointerY * 0.025;
-        technician.rotation.z = idle * 0.04 + pointerX * 0.02;
-        technician.rotation.y = pointerX * 0.05;
-        technician.rotation.x = -pointerY * 0.03;
-        technicianBody.scale.y = 1 + breath * 0.018;
-        head.rotation.z = idle * 0.035 - pointerX * 0.04;
-        head.rotation.x = pointerY * 0.045;
-        arm.rotation.z = -0.72 + Math.sin(elapsed * 1.6 + 0.5) * 0.07;
-        hand.position.y = -0.27 + Math.sin(elapsed * 1.6 + 0.5) * 0.01;
-        toolbox.position.y = -0.43 + Math.sin(elapsed * 1.6 + 0.5) * 0.012;
-        toolbox.rotation.z = Math.sin(elapsed * 1.6 + 0.5) * 0.035;
+        photoStage.position.x = photoOrigin.x + pointerX * 0.075;
+        photoStage.position.y = photoOrigin.y + idle * 0.024 + pointerY * 0.05;
+        photoStage.rotation.z = idle * 0.012 + pointerX * 0.018;
+        photoStage.rotation.y = pointerX * 0.055;
+        photoStage.rotation.x = -pointerY * 0.035;
+        photoCard.position.z = 0.02 + Math.sin(elapsed * 1.55) * 0.018;
+        photoShadow.position.x = 0.04 - pointerX * 0.04;
+        photoShadow.position.y = -0.04 - idle * 0.012;
         warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18;
       }
       ledRefs.current.forEach(({ led, glow }, index) => {
@@ -486,7 +459,7 @@ export default function Hero3D() {
       mount.replaceChildren();
       ledRefs.current = [];
       hotspotRefs.current = {};
-      technicianRef.current = null;
+      photoRef.stage = null;
     };
   }, []);
 
