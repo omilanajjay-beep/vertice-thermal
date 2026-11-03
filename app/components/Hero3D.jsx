@@ -119,6 +119,7 @@ export default function Hero3D() {
   const cameraTweenRef = useRef(null);
   const renderRef = useRef(() => {});
   const pointerRef = useRef(new THREE.Vector2());
+  const scrollRef = useRef(0);
   const hotspotRefs = useRef({});
   const reducedMotionRef = useRef(false);
   const ledRefs = useRef([]);
@@ -317,6 +318,12 @@ export default function Hero3D() {
     const onPointerLeave = () => pointerRef.current.set(0, 0);
     interactionRoot.addEventListener('pointermove', onPointerMove, { passive: true });
     interactionRoot.addEventListener('pointerleave', onPointerLeave, { passive: true });
+    const onScroll = () => {
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+      scrollRef.current = THREE.MathUtils.clamp(window.scrollY / maxScroll, 0, 1);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     let frame = 0;
     let running = false;
@@ -331,11 +338,12 @@ export default function Hero3D() {
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
       const pointer = pointerRef.current;
+      const scrollProgress = reducedMotion ? 0 : scrollRef.current;
       const drift = reducedMotion ? 0 : Math.sin(elapsed * 0.34) * 0.035;
       desiredCamera.set(
-        cameraGoalRef.current.x + (reducedMotion || mobile ? 0 : pointer.x * 0.2) + drift,
-        cameraGoalRef.current.y + (reducedMotion || mobile ? 0 : pointer.y * 0.11) + (reducedMotion ? 0 : Math.sin(elapsed * 0.47) * 0.018),
-        cameraGoalRef.current.z + (reducedMotion || mobile ? 0 : pointer.x * 0.045),
+        cameraGoalRef.current.x + (reducedMotion || mobile ? 0 : pointer.x * 0.2) + drift + scrollProgress * 0.22,
+        cameraGoalRef.current.y + (reducedMotion || mobile ? 0 : pointer.y * 0.11) + (reducedMotion ? 0 : Math.sin(elapsed * 0.47) * 0.018) - scrollProgress * 0.12,
+        cameraGoalRef.current.z + (reducedMotion || mobile ? 0 : pointer.x * 0.045) + scrollProgress * 0.3,
       );
       if (reducedMotion) camera.position.copy(cameraGoalRef.current);
       else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.2));
@@ -343,14 +351,16 @@ export default function Hero3D() {
         const idle = Math.sin(elapsed * (mobile ? 0.72 : 0.92));
         const pointerX = mobile ? 0 : pointer.x;
         const pointerY = mobile ? 0 : pointer.y;
-        photoStage.position.x = photoOrigin.x + pointerX * 0.075;
-        photoStage.position.y = photoOrigin.y + idle * 0.024 + pointerY * 0.05;
-        photoStage.rotation.z = idle * 0.012 + pointerX * 0.018;
-        photoStage.rotation.y = pointerX * 0.055;
-        photoStage.rotation.x = -pointerY * 0.035;
+        photoStage.position.x = photoOrigin.x + pointerX * 0.075 - scrollProgress * 0.16;
+        photoStage.position.y = photoOrigin.y + idle * 0.024 + pointerY * 0.05 + scrollProgress * 0.18;
+        photoStage.position.z = photoOrigin.z + scrollProgress * 0.2;
+        photoStage.rotation.z = idle * 0.012 + pointerX * 0.018 - scrollProgress * 0.018;
+        photoStage.rotation.y = pointerX * 0.055 + scrollProgress * 0.08;
+        photoStage.rotation.x = -pointerY * 0.035 + scrollProgress * 0.045;
+        photoStage.scale.setScalar(1.08 + scrollProgress * 0.055);
         photoCard.position.z = 0.02 + Math.sin(elapsed * 1.55) * 0.018;
-        photoShadow.position.x = 0.04 - pointerX * 0.04;
-        photoShadow.position.y = -0.04 - idle * 0.012;
+        photoShadow.position.x = 0.04 - pointerX * 0.04 - scrollProgress * 0.06;
+        photoShadow.position.y = -0.04 - idle * 0.012 - scrollProgress * 0.025;
         warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18;
       }
       ledRefs.current.forEach(({ led, glow }, index) => {
@@ -438,6 +448,7 @@ export default function Hero3D() {
       window.removeEventListener('resize', onResize);
       interactionRoot.removeEventListener('pointermove', onPointerMove);
       interactionRoot.removeEventListener('pointerleave', onPointerLeave);
+      window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       if (reducedMotionQuery.removeEventListener) reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
       else reducedMotionQuery.removeListener?.(onReducedMotionChange);
