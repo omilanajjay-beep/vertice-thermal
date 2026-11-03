@@ -12,7 +12,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'Arial', 'sans-serif'],
-        display: ['Playfair Display', 'Georgia', 'serif'],
+        display: ['Syne', 'Arial', 'sans-serif'],
       },
       boxShadow: {
         glass: '0 24px 70px rgba(0,0,0,.34), inset 0 1px rgba(255,255,255,.07)',

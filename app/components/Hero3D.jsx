@@ -6,7 +6,7 @@ import * as THREE from 'three';
 
 const HOTSPOTS = [
   { id: 'compressor', label: 'Inverter compressor', note: 'Variable output', left: '12%', top: '62%', anchor: [-1.02, 0.16, 0.78], camera: [-3.0, 1.65, 5.5], target: [-0.82, 0.18, 0.12] },
-  { id: 'fan', label: 'AeroBlade fan', note: 'Low-noise airflow', left: '55%', top: '30%', anchor: [-0.15, 0.16, 1.02], camera: [0.65, 1.55, 4.35], target: [0.0, 0.18, 0.62] },
+  { id: 'fan', label: 'Field technician', note: 'Smiling service specialist', left: '55%', top: '30%', anchor: [-0.15, 0.16, 1.02], camera: [0.65, 1.55, 4.35], target: [0.0, 0.18, 0.62] },
   { id: 'exchanger', label: 'Copper core exchanger', note: 'Thermal exchange', left: '70%', top: '62%', anchor: [0.92, 0.1, 0.58], camera: [3.0, 1.55, 4.9], target: [0.92, 0.1, 0.48] },
 ];
 
@@ -241,39 +241,54 @@ export default function Hero3D() {
     compressor.add(compressorRing);
     scene.add(compressor);
 
-    // Circular grille, motor hub and eight swept blades.
+    // Stylized 3D service technician replacing the original AeroBlade fan visual.
     const fanCenter = new THREE.Vector3(-0.15, 0.16, 0.86);
-    const fanRing = new THREE.Mesh(new THREE.TorusGeometry(0.71, 0.027, 14, 72), grilleMaterial);
-    fanRing.position.copy(fanCenter);
-    scene.add(fanRing);
     const rotor = new THREE.Group();
-    rotor.position.copy(fanCenter);
-    const bladeShape = new THREE.Shape();
-    bladeShape.moveTo(-0.035, 0.045);
-    bladeShape.bezierCurveTo(0.03, 0.08, 0.23, 0.22, 0.48, 0.59);
-    bladeShape.bezierCurveTo(0.56, 0.72, 0.48, 0.75, 0.37, 0.68);
-    bladeShape.bezierCurveTo(0.14, 0.53, 0.045, 0.3, -0.035, 0.045);
-    const bladeGeometry = new THREE.ShapeGeometry(bladeShape, 20);
-    const bladeMaterial = new THREE.MeshStandardMaterial({ color: '#bbc0c0', metalness: 0.83, roughness: 0.24, side: THREE.DoubleSide });
-    for (let i = 0; i < 8; i += 1) {
-      const blade = new THREE.Mesh(bladeGeometry, bladeMaterial);
-      blade.rotation.z = i * Math.PI / 4;
-      rotor.add(blade);
-    }
+    rotor.position.copy(fanCenter).setZ(fanCenter.z + 0.12);
+    const technicianSkin = new THREE.MeshStandardMaterial({ color: '#c9825c', roughness: 0.72 });
+    const technicianShirt = new THREE.MeshStandardMaterial({ color: '#00FF87', roughness: 0.58, metalness: 0.08 });
+    const technicianPants = new THREE.MeshStandardMaterial({ color: '#202326', roughness: 0.75 });
+    const toolboxMaterial = new THREE.MeshStandardMaterial({ color: '#00FF87', roughness: 0.42, metalness: 0.32 });
+    const faceMaterial = new THREE.MeshBasicMaterial({ color: '#171819' });
+    const technicianBody = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.52, 18), technicianShirt);
+    technicianBody.position.y = -0.18;
+    rotor.add(technicianBody);
+    [-0.11, 0.11].forEach((x) => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.075, 0.34, 12), technicianPants);
+      leg.position.set(x, -0.58, 0);
+      rotor.add(leg);
+    });
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 24, 18), technicianSkin);
+    head.position.set(0, 0.29, 0.01);
+    rotor.add(head);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.205, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), technicianShirt);
+    cap.position.set(0, 0.39, 0.01);
+    rotor.add(cap);
+    [-0.065, 0.065].forEach((x) => {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 10, 10), faceMaterial);
+      eye.position.set(x, 0.31, 0.18);
+      rotor.add(eye);
+    });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 18, Math.PI), faceMaterial);
+    smile.position.set(0, 0.235, 0.18);
+    smile.rotation.z = Math.PI;
+    rotor.add(smile);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.38, 12), technicianShirt);
+    arm.position.set(0.29, -0.12, 0.02);
+    arm.rotation.z = -0.72;
+    rotor.add(arm);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 12), technicianSkin);
+    hand.position.set(0.42, -0.27, 0.04);
+    rotor.add(hand);
+    const toolbox = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.23, 0.22), toolboxMaterial);
+    toolbox.position.set(0.43, -0.43, 0.05);
+    rotor.add(toolbox);
+    const toolboxHandle = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.018, 8, 18, Math.PI), grilleMaterial);
+    toolboxHandle.position.set(0.43, -0.29, 0.05);
+    toolboxHandle.rotation.z = Math.PI;
+    rotor.add(toolboxHandle);
     scene.add(rotor);
     fanRef.current = rotor;
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.18, 40), aluminum);
-    hub.rotation.x = Math.PI / 2;
-    hub.position.copy(fanCenter).setZ(fanCenter.z + 0.065);
-    scene.add(hub);
-    const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.19, 32), copperMaterial);
-    hubCap.rotation.x = Math.PI / 2;
-    hubCap.position.copy(fanCenter).setZ(fanCenter.z + 0.15);
-    scene.add(hubCap);
-    for (let i = 0; i < 4; i += 1) {
-      const spoke = box(0.018, 1.36, 0.03, grilleMaterial, [fanCenter.x, fanCenter.y, fanCenter.z + 0.045], scene, false, false);
-      spoke.rotation.z = i * Math.PI / 4;
-    }
 
     // Restrained warm status emblem, with no printed branding or text.
     const ledMaterial = new THREE.MeshBasicMaterial({ color: '#d9e7cf' });
@@ -346,7 +361,8 @@ export default function Hero3D() {
       if (reducedMotion) camera.position.copy(cameraGoalRef.current);
       else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.2));
       if (!reducedMotion) {
-        rotor.rotation.z += delta * (mobile ? 2.2 : 2.65);
+        rotor.rotation.z = Math.sin(elapsed * (mobile ? 0.9 : 1.15)) * 0.045;
+        rotor.position.y = fanCenter.y + Math.sin(elapsed * 1.8) * 0.018;
         warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18;
       }
       ledRefs.current.forEach(({ led, glow }, index) => {
