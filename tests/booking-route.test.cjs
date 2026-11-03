@@ -27,10 +27,10 @@ let liveSlots = [];
 const calConfig = {
   apiKey: 'cal-test-key',
   eventTypeSlug: 'hvac-service',
-  username: 'vertice',
+  username: 'prince',
 };
 const calMock = {
-  bookingEventIdentity: () => ({ eventTypeSlug: 'hvac-service', username: 'vertice' }),
+  bookingEventIdentity: () => ({ eventTypeSlug: 'hvac-service', username: 'prince' }),
   fetchCalSlots: async () => liveSlots,
   getCalConfig: () => calConfig,
   validTimeZone: (value) => value === 'America/Los_Angeles' || value === 'UTC',
@@ -68,9 +68,9 @@ let bookingResponse;
 let sendgridResponse;
 
 function requestFor(start, attendee = validAttendee()) {
-  return new Request('https://vertice.test/api/book', {
+  return new Request('https://prince.test/api/book', {
     method: 'POST',
-    headers: { origin: 'https://vertice.test', host: 'vertice.test', 'content-type': 'application/json' },
+    headers: { origin: 'https://prince.test', host: 'prince.test', 'content-type': 'application/json' },
     body: JSON.stringify({ start, timeZone: 'America/Los_Angeles', attendee }),
   });
 }
@@ -104,8 +104,8 @@ function installFetchMock({ booking = response(true, 201, { data: { uid: 'bookin
 
 function setup(start = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()) {
   process.env.SENDGRID_API_KEY = 'sendgrid-test-key';
-  process.env.SENDGRID_FROM_EMAIL = 'dispatch@vertice.test';
-  process.env.SENDGRID_TECH_EMAIL = 'tech@vertice.test';
+  process.env.SENDGRID_FROM_EMAIL = 'dispatch@prince.test';
+  process.env.SENDGRID_TECH_EMAIL = 'tech@prince.test';
   liveSlots = [{ start }];
   installFetchMock();
   return start;
@@ -142,7 +142,7 @@ test('successful booking sends exact Cal field answers and two semantically comp
   assert.equal(emailCalls.length, 2, 'one email should go to the homeowner and one to dispatch');
   const emails = emailCalls.map((call) => JSON.parse(call.options.body));
   const recipients = emails.map((email) => email.personalizations?.[0]?.to?.[0]?.email).sort();
-  assert.deepEqual(recipients, ['alex@example.com', 'tech@vertice.test']);
+  assert.deepEqual(recipients, ['alex@example.com', 'tech@prince.test']);
   for (const email of emails) {
     const message = email.content?.[0]?.value || '';
     for (const value of ['Alex Homeowner', '(555) 123-4567', 'alex@example.com', '123 Main Street, Portland', 'Furnace is making a loud rattling noise']) {

@@ -30,8 +30,8 @@ function sideReply(answer: string, step: IntakeStep, name = '') {
   const lower = answer.toLowerCase();
   const question = fieldQuestion(step, name);
   if (/^(?:hi|hello|hey|hiya|howdy)(?:\s+there)?[!?.\s]*$/.test(lower)) return `Hi there! I’m glad you reached out. ${question}`;
-  if (/how are you/.test(lower)) return `I’m doing well, thanks for asking! I’m Elena, VERTICE’s virtual assistant, here to help coordinate your visit. ${question}`;
-  if (/are you (?:a|an?)?\s*ai|artificial intelligence/.test(lower)) return `Yes—I’m Elena, VERTICE’s virtual assistant. I’m here to help coordinate a heating and cooling visit. ${question}`;
+  if (/how are you/.test(lower)) return `I’m doing well, thanks for asking! I’m Elena, PRINCE’s virtual assistant, here to help coordinate your visit. ${question}`;
+  if (/are you (?:a|an?)?\s*ai|artificial intelligence/.test(lower)) return `Yes—I’m Elena, PRINCE’s virtual assistant. I’m here to help coordinate a heating and cooling visit. ${question}`;
   if (/what (?:do you|service)|what(?:'s| is) the service/.test(lower)) return `We help arrange heating and cooling service visits, and I’ll gladly get the details started for you. ${question}`;
   if (/cost|price|how much|quote/.test(lower)) return `That’s a fair question. The team can talk through pricing once they’ve reviewed the job; I can’t provide a quote here. ${question}`;
   if (/available|availability|when can/.test(lower)) return `I’ll check live visit times for you as soon as we have the details. ${question}`;

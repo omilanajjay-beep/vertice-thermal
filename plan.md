@@ -1,8 +1,8 @@
-# VERTICE THERMAL implementation plan
+# PRINCE HVAC implementation plan
 
 ## Product and design direction
 
-VERTICE THERMAL is positioned as a quiet-luxury climate systems brand for design-conscious homeowners and specialist contractors. The design movement is editorial architectural minimalism: charcoal surfaces, champagne metal, sand typography and restrained motion. The layout uses asymmetrical editorial bands and a technical field-log cadence rather than generic centered cards. Signature motifs are the V monogram, engineering labels and gold measurement lines. Motion is deliberate and slow: hotspot emphasis, fan rotation and soft GSAP focus shifts reinforce precision. Manrope carries the UI; Playfair Display carries the high-end editorial voice.
+PRINCE HVAC is positioned as a quiet-luxury climate systems brand for design-conscious homeowners and specialist contractors. The design movement is editorial architectural minimalism: charcoal surfaces, champagne metal, sand typography and restrained motion. The layout uses asymmetrical editorial bands and a technical field-log cadence rather than generic centered cards. Signature motifs are the V monogram, engineering labels and gold measurement lines. Motion is deliberate and slow: hotspot emphasis, fan rotation and soft GSAP focus shifts reinforce precision. Manrope carries the UI; Playfair Display carries the high-end editorial voice.
 
 ## Structure
 

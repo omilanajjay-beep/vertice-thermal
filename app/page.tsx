@@ -60,7 +60,7 @@ function formatSlotDay(value: string, timeZone: string) {
 
 function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', text: 'Hi there! I’m Elena, VERTICE’s virtual dispatch assistant. I’d be happy to help arrange a visit. To get us started, what name would you like me to use?' },
+    { role: 'assistant', text: 'Hi there! I’m Elena, PRINCE’s virtual dispatch assistant. I’d be happy to help arrange a visit. To get us started, what name would you like me to use?' },
   ]);
   const [intake, setIntake] = useState<Intake>(emptyIntake);
   const [step, setStep] = useState(0);
@@ -216,7 +216,7 @@ export default function Home() {
   return <main className="min-h-screen bg-ink text-paper">
     <div className="status-bar"><span><i className="status-indicator" /> RESIDENTIAL CLIMATE / ENGINEERED WITH INTENT</span><span className="status-right">THERMAL COMFORT, CONSIDERED <ArrowUpRight size={12} /></span></div>
     <nav className="site-nav" aria-label="Main navigation">
-      <a className="brand" href="#top" aria-label="VERTICE THERMAL home"><span className="brand-symbol">V</span><span className="brand-name">VERTICE<small>THERMAL</small></span></a>
+      <a className="brand" href="#top" aria-label="PRINCE HVAC home"><span className="brand-symbol">V</span><span className="brand-name">PRINCE<small>THERMAL</small></span></a>
       <div id="primary-links" className={`nav-links ${menuOpen ? 'open' : ''}`}>
         <a onClick={() => setMenuOpen(false)} href="#system">The system</a>
         <a onClick={() => setMenuOpen(false)} href="#team">Our approach</a>
@@ -283,7 +283,7 @@ export default function Home() {
 
     <section className="closing-band" data-reveal><div><span className="eyebrow">A MORE CONSIDERED KIND OF COMFORT</span><h2>Let’s start with<br /><i>your home.</i></h2></div><button className="button button-gold" onClick={requestSurvey}>Request a home survey <ArrowUpRight size={15} /></button></section>
 
-    <footer className="site-footer"><a className="brand" href="#top"><span className="brand-symbol">V</span><span className="brand-name">VERTICE<small>THERMAL</small></span></a><span className="footer-note">CLIMATE SYSTEMS / ARCHITECTURAL COMFORT</span><button onClick={requestSurvey}>Talk to Elena <ArrowUpRight size={14} /></button></footer>
+    <footer className="site-footer"><a className="brand" href="#top"><span className="brand-symbol">V</span><span className="brand-name">PRINCE<small>THERMAL</small></span></a><span className="footer-note">CLIMATE SYSTEMS / ARCHITECTURAL COMFORT</span><button onClick={requestSurvey}>Talk to Elena <ArrowUpRight size={14} /></button></footer>
 
     <SiteMotion />
     <Concierge open={chatOpen} setOpen={setChatOpen} />

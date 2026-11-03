@@ -23,7 +23,7 @@ function loadRoute() {
   try { const mod = new Module(routePath, module); mod.filename = routePath; mod.paths = Module._nodeModulePaths(path.dirname(routePath)); mod._compile(routeCode, routePath); return mod.exports; } finally { Module._load = original; }
 }
 const { POST } = loadRoute();
-function request(step, answer, extra = {}) { return new Request('https://vertice.test/api/concierge', { method: 'POST', headers: { origin: 'https://vertice.test', host: 'vertice.test', 'content-type': 'application/json' }, body: JSON.stringify({ step, answer, website: '', ...extra }) }); }
+function request(step, answer, extra = {}) { return new Request('https://prince.test/api/concierge', { method: 'POST', headers: { origin: 'https://prince.test', host: 'prince.test', 'content-type': 'application/json' }, body: JSON.stringify({ step, answer, website: '', ...extra }) }); }
 test.afterEach(() => { delete global.fetch; delete process.env.GROQ_API_KEY; });
 
 test('greeting remains at name step and does not advance', async () => {
@@ -100,7 +100,7 @@ test('identity question remains factual even when a model is configured', async 
 
 test('null and non-object request bodies are rejected safely', async () => {
   for (const value of [null, [], 'hello', 123]) {
-    const result = await POST(new Request('https://vertice.test/api/concierge', { method: 'POST', body: JSON.stringify(value) }));
+    const result = await POST(new Request('https://prince.test/api/concierge', { method: 'POST', body: JSON.stringify(value) }));
     assert.equal(result.status, 400);
   }
 });

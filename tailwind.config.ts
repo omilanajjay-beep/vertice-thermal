@@ -8,7 +8,7 @@ const config: Config = {
         ink: '#0B0C0E',
         paper: '#EEE9DF',
         sand: '#C1B9AB',
-        champagne: '#C5A880',
+        champagne: '#00FF87',
       },
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'Arial', 'sans-serif'],

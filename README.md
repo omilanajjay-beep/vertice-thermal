@@ -1,4 +1,4 @@
-# VERTICE THERMAL
+# PRINCE HVAC
 
 A responsive architectural climate-systems site with a procedural Three.js product study, GSAP camera hotspots, contractor revenue calculator, truthful service/review states, and server-side concierge, Cal.com, and SendGrid routes.
 
@@ -44,4 +44,4 @@ Run `npm test` and `npm run typecheck` for local regression checks. Tests mock a
 
 ## Netlify deployment
 
-The site uses Next.js App Router, which Netlify supports through its automatically managed OpenNext adapter. Import the private repository `https://github.com/omilanajjay-beep/vertice-thermal` and deploy the `main` branch. Use the **Next.js** framework preset, build command `npm run build`, and Node.js 22. Leave the publish directory to Netlify's automatic Next.js adapter detection; do not force a static export or a custom publish directory. Add the environment variables above in Netlify's encrypted site environment settings, then deploy. Set `NEXT_PUBLIC_SITE_URL` to the assigned production origin after Netlify creates the site and redeploy if necessary.
+The site uses Next.js App Router, which Netlify supports through its automatically managed OpenNext adapter. Import the private repository `https://github.com/omilanajjay-beep/prince-hvac` and deploy the `main` branch. Use the **Next.js** framework preset, build command `npm run build`, and Node.js 22. Leave the publish directory to Netlify's automatic Next.js adapter detection; do not force a static export or a custom publish directory. Add the environment variables above in Netlify's encrypted site environment settings, then deploy. Set `NEXT_PUBLIC_SITE_URL` to the assigned production origin after Netlify creates the site and redeploy if necessary.

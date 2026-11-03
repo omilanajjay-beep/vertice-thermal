@@ -31,7 +31,7 @@ async function sendEmail(to: string, subject: string, text: string) {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.SENDGRID_API_KEY}` },
     body: JSON.stringify({
       personalizations: [{ to: [{ email: to }] }],
-      from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'VERTICE THERMAL' },
+      from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'PRINCE HVAC' },
       subject,
       content: [{ type: 'text/plain', value: text }],
     }),
@@ -110,11 +110,11 @@ export async function POST(request: Request) {
   const bookingPayload = await bookingResponse.json().catch(() => ({}));
   const dateLabel = new Intl.DateTimeFormat('en', { dateStyle: 'full', timeStyle: 'short', timeZone }).format(new Date(startTime));
   const visitDetails = `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nAddress: ${address}\nVisit: ${dateLabel} (${timeZone})\nHVAC issue: ${problem}`;
-  const homeownerMessage = `Hello ${name},\n\nYour VERTICE THERMAL visit is confirmed for ${dateLabel} (${timeZone}).\n\n${visitDetails}\n\nOur dispatch team will contact you if any details are needed.\n\nVERTICE THERMAL`;
-  const technicianMessage = `A VERTICE THERMAL appointment has been booked.\n\n${visitDetails}\n\nPlease follow up with the homeowner as needed.`;
+  const homeownerMessage = `Hello ${name},\n\nYour PRINCE HVAC visit is confirmed for ${dateLabel} (${timeZone}).\n\n${visitDetails}\n\nOur dispatch team will contact you if any details are needed.\n\nPRINCE HVAC`;
+  const technicianMessage = `A PRINCE HVAC appointment has been booked.\n\n${visitDetails}\n\nPlease follow up with the homeowner as needed.`;
   const emailResults = await Promise.allSettled([
-    sendEmail(email, 'Your VERTICE THERMAL visit is confirmed', homeownerMessage),
-    sendEmail(technician, 'New VERTICE THERMAL appointment', technicianMessage),
+    sendEmail(email, 'Your PRINCE HVAC visit is confirmed', homeownerMessage),
+    sendEmail(technician, 'New PRINCE HVAC appointment', technicianMessage),
   ]);
   const emailWarning = emailResults.some((result) => result.status === 'rejected' || !result.value);
   const bookingId = bookingPayload?.data?.uid || bookingPayload?.data?.id || null;
