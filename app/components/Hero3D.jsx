@@ -118,8 +118,6 @@ export default function Hero3D() {
   const cameraGoalRef = useRef(new THREE.Vector3(3.6, 2.55, 7.35));
   const cameraTweenRef = useRef(null);
   const renderRef = useRef(() => {});
-  const pointerRef = useRef(new THREE.Vector2());
-  const scrollRef = useRef(0);
   const hotspotRefs = useRef({});
   const reducedMotionRef = useRef(false);
   const ledRefs = useRef([]);
@@ -307,24 +305,6 @@ export default function Hero3D() {
     resize();
     const onResize = () => resize();
     window.addEventListener('resize', onResize, { passive: true });
-    const interactionRoot = mount.parentElement || mount;
-    const onPointerMove = (event) => {
-      if (mobile || reducedMotion) return;
-      const bounds = interactionRoot.getBoundingClientRect();
-      const x = ((event.clientX - bounds.left) / Math.max(bounds.width, 1)) * 2 - 1;
-      const y = 1 - ((event.clientY - bounds.top) / Math.max(bounds.height, 1)) * 2;
-      pointerRef.current.set(THREE.MathUtils.clamp(x, -1, 1), THREE.MathUtils.clamp(y, -1, 1));
-    };
-    const onPointerLeave = () => pointerRef.current.set(0, 0);
-    interactionRoot.addEventListener('pointermove', onPointerMove, { passive: true });
-    interactionRoot.addEventListener('pointerleave', onPointerLeave, { passive: true });
-    const onScroll = () => {
-      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
-      scrollRef.current = THREE.MathUtils.clamp(window.scrollY / maxScroll, 0, 1);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-
     let frame = 0;
     let running = false;
     let disposed = false;
@@ -337,40 +317,15 @@ export default function Hero3D() {
       if (disposed) return;
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
-      const pointer = pointerRef.current;
-      const scrollProgress = reducedMotion ? 0 : scrollRef.current;
-      const drift = reducedMotion ? 0 : Math.sin(elapsed * 0.34) * 0.035;
-      desiredCamera.set(
-        cameraGoalRef.current.x + (reducedMotion || mobile ? 0 : pointer.x * 0.2) + drift + scrollProgress * 0.22,
-        cameraGoalRef.current.y + (reducedMotion || mobile ? 0 : pointer.y * 0.11) + (reducedMotion ? 0 : Math.sin(elapsed * 0.47) * 0.018) - scrollProgress * 0.12,
-        cameraGoalRef.current.z + (reducedMotion || mobile ? 0 : pointer.x * 0.045) + scrollProgress * 0.3,
-      );
-      if (reducedMotion) camera.position.copy(cameraGoalRef.current);
-      else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.2));
-      if (!reducedMotion) {
-        const idle = Math.sin(elapsed * (mobile ? 0.72 : 0.92));
-        const pointerX = mobile ? 0 : pointer.x;
-        const pointerY = mobile ? 0 : pointer.y;
-        photoStage.position.x = photoOrigin.x + pointerX * 0.075 - scrollProgress * 0.16;
-        photoStage.position.y = photoOrigin.y + idle * 0.024 + pointerY * 0.05 + scrollProgress * 0.18;
-        photoStage.position.z = photoOrigin.z + scrollProgress * 0.2;
-        photoStage.rotation.z = idle * 0.012 + pointerX * 0.018 - scrollProgress * 0.018;
-        photoStage.rotation.y = pointerX * 0.055 + scrollProgress * 0.08;
-        photoStage.rotation.x = -pointerY * 0.035 + scrollProgress * 0.045;
-        photoStage.scale.setScalar(1.08 + scrollProgress * 0.055);
-        photoCard.position.z = 0.02 + Math.sin(elapsed * 1.55) * 0.018;
-        photoShadow.position.x = 0.04 - pointerX * 0.04 - scrollProgress * 0.06;
-        photoShadow.position.y = -0.04 - idle * 0.012 - scrollProgress * 0.025;
-        warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18;
-      }
-      ledRefs.current.forEach(({ led, glow }, index) => {
-        const pulse = reducedMotion ? 1 : 0.78 + Math.sin(elapsed * 2.1 + index * 1.6) * 0.16;
-        led.scale.setScalar(pulse);
-        glow.intensity = 0.35 + pulse * 0.34;
+      desiredCamera.copy(cameraGoalRef.current);
+      camera.position.lerp(desiredCamera, reducedMotion ? 1 : 1 - Math.exp(-delta * 3.2));
+      ledRefs.current.forEach(({ led, glow }) => {
+        led.scale.setScalar(1);
+        glow.intensity = 0.68;
       });
       desiredLook.set(
-        targetRef.current.x + (reducedMotion || mobile ? 0 : pointer.x * 0.035),
-        targetRef.current.y + (reducedMotion || mobile ? 0 : pointer.y * 0.025),
+        targetRef.current.x,
+        targetRef.current.y,
         targetRef.current.z,
       );
       camera.lookAt(desiredLook);
@@ -446,9 +401,6 @@ export default function Hero3D() {
       disposed = true;
       stopRendering();
       window.removeEventListener('resize', onResize);
-      interactionRoot.removeEventListener('pointermove', onPointerMove);
-      interactionRoot.removeEventListener('pointerleave', onPointerLeave);
-      window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       if (reducedMotionQuery.removeEventListener) reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
       else reducedMotionQuery.removeListener?.(onReducedMotionChange);
