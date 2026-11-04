@@ -115,7 +115,7 @@ export default function Hero3D() {
   const mountRef = useRef(null);
   const cameraRef = useRef(null);
   const targetRef = useRef(new THREE.Vector3(0, 0.2, 0.05));
-  const cameraGoalRef = useRef(new THREE.Vector3(3.6, 2.55, 7.35));
+  const cameraGoalRef = useRef(new THREE.Vector3(0, 0.15, 7.35));
   const cameraTweenRef = useRef(null);
   const renderRef = useRef(() => {});
   const hotspotRefs = useRef({});
@@ -135,7 +135,7 @@ export default function Hero3D() {
     scene.fog = new THREE.Fog('#08131f', 9, 25);
 
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 80);
-    camera.position.set(3.6, 2.55, 7.35);
+    camera.position.set(0, 0.15, 7.35);
     camera.lookAt(targetRef.current);
     cameraRef.current = camera;
     cameraGoalRef.current.copy(camera.position);
@@ -256,7 +256,7 @@ export default function Hero3D() {
     );
     photoShadow.position.set(0.04, -0.04, -0.11);
     photoStage.add(photoShadow);
-    const photoTexture = new THREE.TextureLoader().load('/service-technician-clean.png');
+    const photoTexture = new THREE.TextureLoader().load('/service-technician-final.png');
     photoTexture.colorSpace = THREE.SRGBColorSpace;
     photoTexture.anisotropy = 8;
     const photoCard = new THREE.Mesh(
