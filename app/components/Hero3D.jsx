@@ -141,7 +141,8 @@ export default function Hero3D() {
     cameraGoalRef.current.copy(camera.position);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2.25));
+    // Keep the photo and van lettering crisp on high-density phone screens.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 3 : 2.5));
     renderer.shadowMap.enabled = !mobile;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -256,9 +257,12 @@ export default function Hero3D() {
     );
     photoShadow.position.set(0.04, -0.04, -0.11);
     photoStage.add(photoShadow);
-    const photoTexture = new THREE.TextureLoader().load('/service-technician-final2.png');
+    const photoTexture = new THREE.TextureLoader().load(
+      '/service-technician-slogan.webp',
+      () => renderRef.current(),
+    );
     photoTexture.colorSpace = THREE.SRGBColorSpace;
-    photoTexture.anisotropy = 8;
+    photoTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     const photoCard = new THREE.Mesh(
       new THREE.PlaneGeometry(4.82, 2.63),
       new THREE.MeshBasicMaterial({ map: photoTexture, toneMapped: false, side: THREE.DoubleSide }),
