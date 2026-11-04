@@ -451,17 +451,6 @@ export default function Hero3D() {
   return <div className="scene-wrap">
     <div className="scene-canvas" ref={mountRef} />
     <div className="scene-vignette" aria-hidden="true" />
-    <div className="scene-hotspots" aria-label="Explore equipment components">
-      {HOTSPOTS.map((hotspot) => <button
-        key={hotspot.id}
-        className={`hotspot ${active === hotspot.id ? 'active' : ''}`}
-        style={{ left: hotspot.left, top: hotspot.top }}
-        ref={(element) => { hotspotRefs.current[hotspot.id] = element; }}
-        onClick={() => focusHotspot(hotspot)}
-        aria-pressed={active === hotspot.id}
-        aria-label={`Focus on ${hotspot.label}`}
-      ><span className="hotspot-marker" /><span className="hotspot-copy"><b>{hotspot.label}</b><small>{hotspot.note}</small></span></button>)}
-    </div>
     <div className="scene-scale" aria-hidden="true"><span>ARCHITECTURAL STUDY</span><span>DRAG-FREE / SELECT A COMPONENT</span></div>
   </div>;
 }
