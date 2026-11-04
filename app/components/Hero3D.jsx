@@ -256,7 +256,7 @@ export default function Hero3D() {
     );
     photoShadow.position.set(0.04, -0.04, -0.11);
     photoStage.add(photoShadow);
-    const photoTexture = new THREE.TextureLoader().load('/service-technician-final.png');
+    const photoTexture = new THREE.TextureLoader().load('/service-technician-final2.png');
     photoTexture.colorSpace = THREE.SRGBColorSpace;
     photoTexture.anisotropy = 8;
     const photoCard = new THREE.Mesh(
