@@ -13,4 +13,4 @@ VERTICE THERMAL is positioned as a quiet-luxury climate systems brand for design
 
 ## Service boundary
 
-Secrets are environment-only. The API route degrades gracefully to offline copy when Groq is unavailable. Cal.com and SendGrid are reserved for server-side booking and confirmation wiring after production account configuration; no client secret is exposed.
+Secrets are environment-only. The API route degrades gracefully to offline copy when Groq is unavailable. Cal.com is used for server-side availability and booking; its native confirmation emails are sent after production account configuration. No client secret is exposed.

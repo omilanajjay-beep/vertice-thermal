@@ -147,9 +147,7 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
       setBooked(true);
       setMessages((current) => [...current, {
         role: 'assistant',
-        text: data.emailWarning
-          ? `${intake.name ? `${intake.name}, your visit is reserved. ` : 'Your visit is reserved. '}One of the confirmation emails couldn’t be sent, so our dispatch team will follow up.`
-          : `${intake.name ? `${intake.name}, you’re all set! ` : 'You’re all set! '}Your appointment is confirmed. A confirmation email has been sent to you and the on-call technician.`,
+        text: `${intake.name ? `${intake.name}, you’re all set! ` : 'You’re all set! '}Your appointment is confirmed. Cal.com will send the confirmation email.`,
       }]);
     } catch (error) {
       setMessages((current) => [...current, { role: 'assistant', text: error instanceof Error ? error.message : 'Please try another time.' }]);
@@ -184,7 +182,7 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
               <div className="slot-grid">{daySlots.map((slot) => <button key={slot.start} className={`slot-choice ${selectedSlot === slot.start ? 'selected' : ''}`} onClick={() => setSelectedSlot(slot.start)} disabled={busy}>{formatSlotTime(slot.start, timeZone)}</button>)}</div>
             </div>)}
             <div className="timezone-note"><Clock3 size={12} /> Times shown in {timeZone}</div>
-            <label className="consent-line"><input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)} /> <span>Share these details with our booking and email providers to arrange this visit.</span></label>
+            <label className="consent-line"><input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)} /> <span>Share these details with Cal.com to arrange this visit and receive its confirmation email.</span></label>
             <button className="confirm-slot" onClick={() => void confirmBooking()} disabled={!selectedSlot || !consented || busy}>{busy ? 'Confirming…' : 'Confirm appointment'}<ArrowRight size={15} /></button>
           </>}
         </div>}

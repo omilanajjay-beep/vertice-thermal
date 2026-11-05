@@ -10,6 +10,9 @@ const ACTION_PHRASE = /\b(?:book|booking|schedule|appointment|service\s+call|com
 const ISSUE_FIRST = /^(?:my\s+)?(?:ac|air\s*condition(?:er)?|furnace|boiler|hvac|heating|cooling|thermostat|system)\b.*\b(?:broken|broke|failed|fail(?:ed|ing)?|isn't|is\s+not|not\s+working|leak(?:ing)?|no\s+(?:heat|cool)|won't)\b/i;
 const SELF_INTRO = /^(?:hi|hello|hey)[,\s]+(?:i(?:'m| am)|my\s+name\s+is)\s+(.+?)[!.\s]*$/i;
 const MY_NAME = /^(?:my\s+name\s+is|i(?:'m| am))\s+(.+?)[!.\s]*$/i;
+const CORRECTION = /\b(?:i\s+(?:made|have)\s+(?:a\s+)?(?:typo|mistake)|(?:a\s+)?(?:typo|mistake|correction)\s+(?:in|for)\b|that(?:'s| is)\s+wrong|wrong\s+(?:address|number|email)|let me correct)\b/i;
+const ADDRESS_MARKER = /\b(?:street|st|road|rd|avenue|ave|lane|ln|drive|dr|court|ct|way|place|pl|boulevard|blvd|terrace|ter|close|square|sq|highway|hwy|unit|apartment|apt|flat)\b/i;
+const PROBLEM_CONTEXT = /\b(?:no\s+(?:heat|heating|cool|cooling)|not\s+(?:heating|cooling|working)|too\s+(?:hot|cold)|freezing|cold|warm|hot|house|home|room|airflow|air\s*flow|vent|fan|thermostat|furnace|boiler|\bac\b|air\s*condition(?:er|ing)?|hvac|heating|cooling|system|unit|leak|water|drip|noise|noisy|rattl|vibrat|smell|odor|broken|won't\s+(?:turn\s+on|start|stop)|shut(?:ting)?\s+off)\b/i;
 
 function clean(value: unknown): string {
   return typeof value === 'string' ? value.normalize('NFC').trim().replace(/\s+/g, ' ') : '';
@@ -40,11 +43,18 @@ export function isQuestionOrSideRequest(value: unknown): boolean {
 
 export function validateIntakeAnswer(step: IntakeStep, answer: string): string {
   if (answer.length > (step === 'problem' ? 800 : 240)) return 'That reply is too long. Please shorten it and try again.';
+  if (CORRECTION.test(answer)) {
+    if (step === 'address') return 'No problem—could you re-enter the property address, please?';
+    if (step === 'phone') return 'No problem—could you re-enter the best phone number, please?';
+    if (step === 'email') return 'No problem—could you re-enter the email address, please?';
+    if (step === 'problem') return 'No problem—could you re-enter the heating or cooling issue, please?';
+  }
   if (step === 'name' && !normalizeName(answer)) return 'Please share the name you’d like me to use.';
-  if (step === 'phone' && answer.replace(/\D/g, '').length < 7) return 'That number looks a little short. Could you include at least seven digits?';
+  if (step === 'phone' && (!/^[\d\s()+.\-]+$/.test(answer) || answer.replace(/\D/g, '').length < 7)) return 'That number doesn’t look quite right. Could you enter at least seven digits?';
   if (step === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answer)) return 'Please check the email address and try again.';
-  if (step === 'address' && answer.length < 5) return 'Could you include the street and area for the property?';
+  if (step === 'address' && (answer.length < 5 || (!/\d/.test(answer) && !ADDRESS_MARKER.test(answer)))) return 'Could you include the street and area for the property?';
   if (step === 'problem' && answer.length < 8) return 'Could you share a little more about what the heating or cooling system is doing?';
+  if (step === 'problem' && !PROBLEM_CONTEXT.test(answer)) return 'Could you describe a heating or cooling symptom or the equipment involved—for example, no heat, not cooling, a leak, unusual noise or smell, poor airflow, or a thermostat issue?';
   return '';
 }
 

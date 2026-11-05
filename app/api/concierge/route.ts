@@ -95,7 +95,12 @@ export async function POST(request: Request) {
   if (step !== 'name' && isQuestionOrSideRequest(rawAnswer)) return json({ accepted: false, reply: await conversationalReply(rawAnswer, step, knownName), complete: false, nextQuestion: '' });
   const value = step === 'name' ? name : normalizeAnswer(step, rawAnswer);
   const validation = validateIntakeAnswer(step, value);
-  if (validation) return json({ error: validation }, 422);
+  if (validation) {
+    if (step === 'problem' && /heating or cooling symptom or the equipment involved/i.test(validation)) {
+      return json({ accepted: false, reply: validation, complete: false, nextQuestion: '' });
+    }
+    return json({ error: validation }, 422);
+  }
   if (step === 'problem') {
     const category = issueCategory(value);
     const personalThanks = knownName ? `Thanks for explaining that, ${knownName}.` : 'Thanks for explaining that.';

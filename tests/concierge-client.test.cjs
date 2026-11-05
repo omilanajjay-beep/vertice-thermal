@@ -88,7 +88,7 @@ test('greeting does not advance, and canonical name reaches booking rather than 
       return reply({ accepted: true, value: payload.step === 'name' ? 'Jay Omilana' : payload.answer, reply: 'Got it. Let’s carry on.', complete: payload.step === 'problem' });
     }
     if (String(url).startsWith('/api/slots?')) return reply({ slots: [{ start, date: start.slice(0, 10) }] });
-    if (url === '/api/book') return reply({ ok: true, emailWarning: false }, 201);
+    if (url === '/api/book') return reply({ ok: true, bookingId: 'booking-123' }, 201);
     throw new Error(`Unexpected request: ${url}`);
   };
   await submit(render, 'Hi');
@@ -134,4 +134,22 @@ test('rejected reply stays on the same field and a reviewed guest name is submit
   find(render(), (node) => node.props?.className === 'confirm-slot').props.onClick();
   await new Promise(setImmediate);
   assert.equal(calls.find((call) => call.url === '/api/book').payload.attendee.name, 'Jay Omilana');
+});
+test('a typo correction while address is expected does not advance to the HVAC issue', async () => {
+  const render = createClient();
+  const calls = [];
+  global.fetch = async (url, options = {}) => {
+    const payload = options.body ? JSON.parse(options.body) : null;
+    calls.push({ url: String(url), payload });
+    if (url === '/api/concierge') {
+      if (payload.step === 'address' && payload.answer === 'Sorry I made a typo') return reply({ error: 'No problem—could you re-enter the property address, please?' }, 422);
+      return reply({ accepted: true, value: payload.answer, reply: 'Thanks — next detail.', complete: payload.step === 'problem' });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  for (const answer of ['Jay Omilana', '5551234567', 'jay@example.com', 'Sorry I made a typo']) await submit(render, answer);
+  assert.deepEqual(calls.filter((call) => call.url === '/api/concierge').map((call) => call.payload.step), ['name', 'phone', 'email', 'address']);
+  await submit(render, '123 Main Street, Portland');
+  await submit(render, 'The furnace is not heating');
+  assert.deepEqual(calls.filter((call) => call.url === '/api/concierge').map((call) => call.payload.step), ['name', 'phone', 'email', 'address', 'address', 'problem']);
 });

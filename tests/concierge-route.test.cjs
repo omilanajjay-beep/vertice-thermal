@@ -42,12 +42,42 @@ test('side questions and issue-first answers are not captured as names', async (
 });
 test('phone and email validation reject bad answers without advancing', async () => {
   assert.equal((await POST(request('phone', '123'))).status, 422);
+  assert.equal((await POST(request('phone', 'please call me'))).status, 422);
   assert.equal((await POST(request('email', 'person-at-example'))).status, 422);
   const good = await POST(request('email', ' Person@Example.COM ')); assert.equal(good.status, 200); assert.equal(good.body.accepted, true); assert.equal(good.body.value, 'person@example.com');
+});
+test('a correction while address is expected stays on address and asks for a re-entry', async () => {
+  const result = await POST(request('address', 'Sorry I made a typo', { knownName: 'Jay Omilana' }));
+  assert.equal(result.status, 422);
+  assert.match(result.body.error, /re-enter.*property address/i);
+});
+test('malformed or unrelated address answers do not advance', async () => {
+  const greeting = await POST(request('address', 'hello there'));
+  assert.equal(greeting.status, 200);
+  assert.equal(greeting.body.accepted, false);
+  for (const answer of ['The furnace is not working', '123']) {
+    const result = await POST(request('address', answer));
+    assert.equal(result.status, 422, answer);
+    assert.match(result.body.error, /address|street|area/i);
+  }
 });
 test('problem answer is accepted and gets a concise acknowledgement', async () => {
   const result = await POST(request('problem', 'The furnace is making a loud rattling noise'));
   assert.equal(result.body.accepted, true); assert.equal(result.body.complete, true); assert.equal(result.body.nextQuestion, ''); assert.match(result.body.reply, /noise|pass|team/i);
+});
+test('unrelated problem answers stay on the problem step with examples', async () => {
+  const result = await POST(request('problem', 'I like watching football'));
+  assert.equal(result.status, 200);
+  assert.equal(result.body.accepted, false);
+  assert.equal(result.body.complete, false);
+  assert.equal(result.body.nextQuestion, '');
+  assert.match(result.body.reply, /no heat|not cooling|leak|noise|smell|airflow|thermostat/i);
+});
+test('natural-language comfort complaints are accepted without technical vocabulary', async () => {
+  const result = await POST(request('problem', 'Sorry, the house is freezing and the rooms never warm up'));
+  assert.equal(result.status, 200);
+  assert.equal(result.body.accepted, true);
+  assert.equal(result.body.complete, true);
 });
 test('missing, failing, empty, and PII-containing model output safely fall back', async (t) => {
   for (const mode of ['missing', 'failure', 'empty', 'pii']) await t.test(mode, async () => {
