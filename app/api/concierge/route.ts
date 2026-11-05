@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fieldQuestion, isQuestionOrSideRequest, normalizeAnswer, normalizeName, validateIntakeAnswer, type IntakeStep } from '../../lib/intake';
+import { fieldQuestion, isCorrection, isQuestionOrSideRequest, normalizeAnswer, normalizeName, validateIntakeAnswer, type IntakeStep } from '../../lib/intake';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,6 +37,16 @@ function sideReply(answer: string, step: IntakeStep, name = '') {
   if (/available|availability|when can/.test(lower)) return `I’ll check live visit times for you as soon as we have the details. ${question}`;
   if (/why.*(need|ask)|need.*(data|information)/.test(lower)) return `I ask so the team can reach you and prepare for the visit. ${question}`;
   return `I can help coordinate heating and cooling visits, and I’ll keep this simple. ${question}`;
+}
+function correctionReply(step: IntakeStep, name = '') {
+  const prompts: Record<IntakeStep, string> = {
+    name: 'Please re-enter the name you’d like me to use.',
+    phone: 'No problem—please re-enter the best phone number for the team to reach you on.',
+    email: 'No problem—please re-enter the email address for your appointment details.',
+    address: 'No problem—please re-enter the property address, including the street and area.',
+    problem: 'No problem—please re-enter what the heating or cooling system is doing.',
+  };
+  return name && step !== 'name' ? `No problem, ${name}. ${prompts[step]}` : prompts[step];
 }
 function intentLabel(answer: string) {
   const lower = answer.toLowerCase();
@@ -87,10 +97,15 @@ export async function POST(request: Request) {
   if (body.completedFields !== undefined && (!Array.isArray(body.completedFields) || body.completedFields.length > 20 || body.completedFields.some((f) => typeof f !== 'string' || f.length > 40))) return json({ error: 'Invalid completed fields.' }, 422);
   if (body.issueCategory !== undefined && (typeof body.issueCategory !== 'string' || body.issueCategory.length > 80)) return json({ error: 'Invalid issue category.' }, 422);
   const step = body.step as IntakeStep;
+  if (Array.isArray(body.completedFields)) {
+    const expected = steps.slice(0, steps.indexOf(step));
+    if (body.completedFields.length !== expected.length || body.completedFields.some((field, index) => field !== expected[index])) return json({ error: 'Please continue with the requested detail.' }, 422);
+  }
   const knownName = step === 'name' ? '' : normalizeName(body.knownName);
   const rawAnswer = clean(body.answer);
   if (rawAnswer.length > (step === 'problem' ? 800 : 240)) return json({ error: 'That reply is too long. Please shorten it and try again.' }, 422);
   const name = step === 'name' ? normalizeName(rawAnswer) : '';
+  if (isCorrection(rawAnswer)) return json({ accepted: false, reply: correctionReply(step, knownName), complete: false, nextQuestion: '' });
   if (step === 'name' && (!name || isQuestionOrSideRequest(rawAnswer) || /\b(?:furnace|boiler|air\s*condition|hvac|heating|cooling|leak|broken|not working)\b/i.test(rawAnswer))) return json({ accepted: false, reply: await conversationalReply(rawAnswer, step, knownName), complete: false, nextQuestion: '' });
   if (step !== 'name' && isQuestionOrSideRequest(rawAnswer)) return json({ accepted: false, reply: await conversationalReply(rawAnswer, step, knownName), complete: false, nextQuestion: '' });
   const value = step === 'name' ? name : normalizeAnswer(step, rawAnswer);

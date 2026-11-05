@@ -146,9 +146,7 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
       setBooked(true);
       setMessages((current) => [...current, {
         role: 'assistant',
-        text: data.emailWarning
-          ? `${intake.name ? `${intake.name}, your visit is reserved. ` : 'Your visit is reserved. '}One of the confirmation emails couldn’t be sent, so our dispatch team will follow up.`
-          : `${intake.name ? `${intake.name}, you’re all set! ` : 'You’re all set! '}Your appointment is confirmed. A confirmation email has been sent to you and the on-call technician.`,
+        text: `${intake.name ? `${intake.name}, you’re all set! ` : 'You’re all set! '}Your appointment is confirmed. Cal.com will send the confirmation details by email.`,
       }]);
     } catch (error) {
       setMessages((current) => [...current, { role: 'assistant', text: error instanceof Error ? error.message : 'Please try another time.' }]);

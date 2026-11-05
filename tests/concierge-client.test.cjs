@@ -88,7 +88,7 @@ test('greeting does not advance, and canonical name reaches booking rather than 
       return reply({ accepted: true, value: payload.step === 'name' ? 'Jay Omilana' : payload.answer, reply: 'Got it. Let’s carry on.', complete: payload.step === 'problem' });
     }
     if (String(url).startsWith('/api/slots?')) return reply({ slots: [{ start, date: start.slice(0, 10) }] });
-    if (url === '/api/book') return reply({ ok: true, emailWarning: false }, 201);
+    if (url === '/api/book') return reply({ ok: true, bookingId: 'booking-123' }, 201);
     throw new Error(`Unexpected request: ${url}`);
   };
   await submit(render, 'Hi');

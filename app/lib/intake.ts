@@ -7,7 +7,11 @@ const QUESTION = /[?]|^(?:what|why|how|when|where|who)\s+|^(?:can|could|would|do
 // Do not blacklist ordinary surnames (for example Price or Tech); only reject an
 // explicit request/action phrase. The caller checks the normalized candidate.
 const ACTION_PHRASE = /\b(?:book|booking|schedule|appointment|service\s+call|come\s+out|quote|cost)\b/i;
+// A correction must be explicit; a polite "sorry" before a genuine HVAC
+// complaint is not itself a request to restart the field.
+const CORRECTION = /\b(?:oops|typo|mistake|incorrect|correction|correct(?:ion)?|meant to say|let me fix|start over|try again)\b|\b(?:this|that|it|my answer|the answer)\s+(?:is|was)\s+(?:wrong|incorrect)\b/i;
 const ISSUE_FIRST = /^(?:my\s+)?(?:ac|air\s*condition(?:er)?|furnace|boiler|hvac|heating|cooling|thermostat|system)\b.*\b(?:broken|broke|failed|fail(?:ed|ing)?|isn't|is\s+not|not\s+working|leak(?:ing)?|no\s+(?:heat|cool)|won't)\b/i;
+const HVAC_PROBLEM_CONTEXT = /\b(?:heat(?:ing)?|cool(?:ing)?|ac|a\/c|air\s*condition(?:er|ing)?|furnace|boiler|hvac|thermostat|system|unit|equipment|vent|duct|filter|airflow|air\s+flow|no\s+(?:heat|cool(?:ing)?)|not\s+(?:heating|cooling)|won't\s+(?:heat|cool|turn\s+on)|too\s+(?:hot|cold)|(?:very|too)\s+(?:warm|cold)|freez(?:ing|e)|leak(?:ing)?|drip(?:ping)?|water|noise|noisy|rattl(?:e|ing)|vibrat(?:e|ing)|odor|smell|burning|broken|not\s+working)\b/i;
 const SELF_INTRO = /^(?:hi|hello|hey)[,\s]+(?:i(?:'m| am)|my\s+name\s+is)\s+(.+?)[!.\s]*$/i;
 const MY_NAME = /^(?:my\s+name\s+is|i(?:'m| am))\s+(.+?)[!.\s]*$/i;
 
@@ -38,13 +42,17 @@ export function isQuestionOrSideRequest(value: unknown): boolean {
   return !answer || QUESTION.test(answer) || GREETING_ONLY.test(answer) || /\b(?:how are you|are you (?:a|an?)?\s*ai|what (?:do you|service)|what(?:'s| is) the (?:service|cost|price)|how much|available|availability|why do you need)\b/i.test(answer);
 }
 
+export function isCorrection(value: unknown): boolean {
+  return CORRECTION.test(clean(value));
+}
+
 export function validateIntakeAnswer(step: IntakeStep, answer: string): string {
   if (answer.length > (step === 'problem' ? 800 : 240)) return 'That reply is too long. Please shorten it and try again.';
   if (step === 'name' && !normalizeName(answer)) return 'Please share the name you’d like me to use.';
-  if (step === 'phone' && answer.replace(/\D/g, '').length < 7) return 'That number looks a little short. Could you include at least seven digits?';
+  if (step === 'phone' && (!/^[+()\d\s.\-]+$/.test(answer) || answer.replace(/\D/g, '').length < 7)) return 'Please re-enter a phone number with at least seven digits.';
   if (step === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answer)) return 'Please check the email address and try again.';
-  if (step === 'address' && answer.length < 5) return 'Could you include the street and area for the property?';
-  if (step === 'problem' && answer.length < 8) return 'Could you share a little more about what the heating or cooling system is doing?';
+  if (step === 'address' && (answer.length < 5 || !/(?:\d|p\.?\s*o\.?\s*box|\b(?:street|st\.?|road|rd\.?|avenue|ave\.?|lane|ln\.?|drive|dr\.?|court|ct\.?|way|boulevard|blvd\.?|place|pl\.?|close|terrace|trail)\b)/i.test(answer))) return 'Please re-enter the property address, including the street and area.';
+  if (step === 'problem' && (answer.length < 8 || !HVAC_PROBLEM_CONTEXT.test(answer))) return 'Please describe a heating or cooling symptom or the equipment involved—for example, no heat, no cooling, a leak, noise, odor, poor airflow, or a thermostat, furnace, or AC problem.';
   return '';
 }
 
