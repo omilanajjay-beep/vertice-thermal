@@ -228,11 +228,11 @@ export default function Home() {
 
     <section className="hero" id="top">
       <div className="hero-copy">
-        <span className="eyebrow">CLIMATE SYSTEMS / A CLOSER LOOK</span>
-        <h1>Comfort,<br /><i>quietly</i> perfected.</h1>
-        <p>Thoughtful heat-pump systems, considered as part of the architecture—not an afterthought outside it.</p>
+        <span className="eyebrow">CLIMATE SYSTEMS / BUILT AROUND YOUR HOME</span>
+        <h1>Comfort,<br /><i>built together.</i></h1>
+        <p>A better HVAC experience starts with a real conversation: your priorities, your home and the professional who helps shape a solution.</p>
         <div className="hero-actions"><button className="button button-gold" onClick={() => document.getElementById('system')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}>Explore the system <ArrowUpRight size={15} /></button><button className="quiet-link" onClick={requestSurvey}>Arrange a conversation <ArrowRight size={15} /></button></div>
-        <div className="hero-facts"><div><span>01</span><small>Inverter-led<br />performance</small></div><div><span>02</span><small>Designed for<br />quiet operation</small></div><div><span>03</span><small>Serviceable<br />by design</small></div></div>
+        <div className="hero-facts"><div><span>01</span><small>Listen<br />first</small></div><div><span>02</span><small>Comfort shaped<br />around your home</small></div><div><span>03</span><small>Care beyond<br />handover</small></div></div>
       </div>
       <div className="hero-visual"><Hero3D /><div className="visual-label"><span>PRODUCT STUDY / OUTDOOR UNIT</span><span>INTERACTIVE 3D VIEW</span></div></div>
       <a className="scroll-cue" href="#system"><span>SCROLL TO EXPLORE</span><ArrowDownRight size={15} /></a>
@@ -241,23 +241,23 @@ export default function Home() {
     <section className="manifesto" aria-label="Design principle"><span>FORM FOLLOWS COMFORT</span><i /> <span>QUIETLY BUILT INTO THE HOME</span><i /> <span>DESIGNED FOR THE LONG VIEW</span></section>
 
     <section className="section system-section" id="system">
-      <div className="section-heading" data-reveal><span className="eyebrow">01 / THE SYSTEM</span><h2>Engineering you<br /><i>feel, not hear.</i></h2><p>Every component has a role in the whole: steady output, clean airflow and a system that can be understood and serviced over time.</p></div>
+      <div className="section-heading" data-reveal><span className="eyebrow">01 / THE SYSTEM</span><h2>Comfort is personal.<br /><i>So is the solution.</i></h2><p>A home is more than a floor plan. We listen to what matters, then consider comfort, airflow and equipment as one connected system.</p></div>
       <div className="feature-stack">
-        <article className="feature-row" data-reveal><span className="feature-index">01</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>On-site craftsmanship</h3><p>A qualified technician, equipped to assess the home and keep the system performing beautifully.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
-        <article className="feature-row" data-reveal><span className="feature-index">02</span><div className="feature-icon"><Snowflake size={19} /></div><div><h3>Inverter compressor</h3><p>Output modulates with demand instead of cycling at a single fixed rate.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
-        <article className="feature-row" data-reveal><span className="feature-index">03</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>Copper core exchanger</h3><p>A considered thermal pathway, designed for dependable service access.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
+        <article className="feature-row" data-reveal><span className="feature-index">01</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>Listen before recommending</h3><p>A technician learns how the home is used, what is already installed and what comfort means to you.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
+        <article className="feature-row" data-reveal><span className="feature-index">02</span><div className="feature-icon"><Snowflake size={19} /></div><div><h3>Inverter compressor</h3><p>It adjusts output as demand changes instead of running at one fixed rate—a detail your specialist can explain.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
+        <article className="feature-row" data-reveal><span className="feature-index">03</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>Built for service access</h3><p>A considered thermal pathway with access in mind, helping make future maintenance easier to understand.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
         <div className="system-note"><ShieldCheck size={15} /><span>Performance and equipment selection depend on the property, climate and a proper site assessment.</span></div>
       </div>
     </section>
 
     <section className="team-section" id="team">
-      <div className="team-intro" data-reveal><div><span className="eyebrow">02 / THE PEOPLE</span><h2>Good work begins<br /><i>with good questions.</i></h2></div><p>A responsible visit starts with listening, checking the property and matching the work to the right local specialist.</p></div>
+      <div className="team-intro" data-reveal><div><span className="eyebrow">02 / THE PEOPLE</span><h2>Good work begins<br /><i>when we listen.</i></h2></div><p>You know your home. Your HVAC professional brings the technical eye. The best next step starts when both sides are heard.</p></div>
       <div className="service-cards">
-        <article className="service-card" data-reveal data-depth><span className="card-number">01 / ASSESS</span><div className="service-glyph"><MapPin size={21} /></div><h3>Survey &amp; sizing</h3><p>Understand the home, existing equipment and the comfort you want to achieve.</p><span className="card-rule" /></article>
-        <article className="service-card" data-reveal data-depth><span className="card-number">02 / INSTALL</span><div className="service-glyph"><Wrench size={21} /></div><h3>Installation &amp; commissioning</h3><p>Plan the system around access, airflow, controls and the character of the property.</p><span className="card-rule" /></article>
-        <article className="service-card" data-reveal data-depth><span className="card-number">03 / CARE</span><div className="service-glyph"><Clock3 size={21} /></div><h3>Service &amp; aftercare</h3><p>Keep the system understandable, maintainable and supported after handover.</p><span className="card-rule" /></article>
+        <article className="service-card" data-reveal data-depth><span className="card-number">01 / ASSESS</span><div className="service-glyph"><MapPin size={21} /></div><h3>Listen &amp; assess</h3><p>Share what matters most, what you’ve noticed and what the home already has; the visit starts with your perspective.</p><span className="card-rule" /></article>
+        <article className="service-card" data-reveal data-depth><span className="card-number">02 / INSTALL</span><div className="service-glyph"><Wrench size={21} /></div><h3>A plan you understand</h3><p>Your technician walks through the proposed work and what to expect before installation begins.</p><span className="card-rule" /></article>
+        <article className="service-card" data-reveal data-depth><span className="card-number">03 / CARE</span><div className="service-glyph"><Clock3 size={21} /></div><h3>Support after handover</h3><p>Know what was done, what to keep an eye on and how to follow up when your system needs care.</p><span className="card-rule" /></article>
       </div>
-      <div className="directory-note" data-reveal><BadgeCheck size={16} /><p><strong>Technician directory</strong><br />Individual profiles are published only when licensing and service-area details have been verified. No technician credentials are represented here without supporting records.</p><button onClick={requestSurvey}>Ask about a visit <ArrowUpRight size={14} /></button></div>
+      <div className="directory-note" data-reveal><BadgeCheck size={16} /><p><strong>Technician directory</strong><br />Profiles are published only after licensing and service-area details are verified—so homeowners know who they’re considering. No technician credentials appear here without supporting records.</p><button onClick={requestSurvey}>Ask about a visit <ArrowUpRight size={14} /></button></div>
     </section>
 
     <section className="partner-section" id="partners">
@@ -276,8 +276,8 @@ export default function Home() {
     </section>
 
     <section className="reviews-section" id="reviews">
-      <div className="reviews-intro" data-reveal><span className="eyebrow">04 / SERVICE LOG</span><h2>Proof should<br /><i>be verifiable.</i></h2><p>Every published review should belong to a real visit and a real homeowner.</p></div>
-      <div className="review-empty glass-panel" data-reveal data-depth><span className="review-seal"><ShieldCheck size={23} /></span><span className="eyebrow">VERIFIED SERVICE NOTES</span><h3>Only the real thing.</h3><p>Reviews will appear here once completed service records and homeowner permission are confirmed. No testimonial or rating is invented for this page.</p><button onClick={requestSurvey}>Start a service request <ArrowUpRight size={15} /></button></div>
+      <div className="reviews-intro" data-reveal><span className="eyebrow">04 / SERVICE LOG</span><h2>Trust is earned<br /><i>one real visit at a time.</i></h2><p>Every published note should come from completed work in a real home—and be shared with the homeowner’s permission.</p></div>
+      <div className="review-empty glass-panel" data-reveal data-depth><span className="review-seal"><ShieldCheck size={23} /></span><span className="eyebrow">VERIFIED SERVICE NOTES</span><h3>Real work. Real permission.</h3><p>Reviews appear only after a real service is complete and the homeowner agrees to share one. No testimonial or rating is invented here.</p><button onClick={requestSurvey}>Start a service request <ArrowUpRight size={15} /></button></div>
     </section>
 
     <section className="closing-band" data-reveal><div><span className="eyebrow">A MORE CONSIDERED KIND OF COMFORT</span><h2>Let’s start with<br /><i>your home.</i></h2></div><button className="button button-gold" onClick={requestSurvey}>Request a home survey <ArrowUpRight size={15} /></button></section>
