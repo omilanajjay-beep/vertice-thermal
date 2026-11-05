@@ -65,7 +65,6 @@ const { POST } = loadRoute();
 
 let fetchCalls;
 let bookingResponse;
-let sendgridResponse;
 
 function requestFor(start, attendee = validAttendee()) {
   return new Request('https://prince.test/api/book', {
@@ -90,22 +89,17 @@ function response(ok, status, body = {}) {
   return { ok, status, async json() { return body; } };
 }
 
-function installFetchMock({ booking = response(true, 201, { data: { uid: 'booking-123' } }), sendgrid = response(true, 202) } = {}) {
+function installFetchMock({ booking = response(true, 201, { data: { uid: 'booking-123' } }) } = {}) {
   fetchCalls = [];
   bookingResponse = booking;
-  sendgridResponse = sendgrid;
   global.fetch = async (url, options = {}) => {
     fetchCalls.push({ url: String(url), options });
     if (String(url).includes('/bookings')) return bookingResponse;
-    if (String(url).includes('sendgrid.com')) return sendgridResponse;
     throw new Error(`Unexpected outgoing request: ${url}`);
   };
 }
 
 function setup(start = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()) {
-  process.env.SENDGRID_API_KEY = 'sendgrid-test-key';
-  process.env.SENDGRID_FROM_EMAIL = 'dispatch@prince.test';
-  process.env.SENDGRID_TECH_EMAIL = 'tech@prince.test';
   liveSlots = [{ start }];
   installFetchMock();
   return start;
@@ -113,10 +107,9 @@ function setup(start = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()) 
 
 test.afterEach(() => {
   delete global.fetch;
-  for (const key of ['SENDGRID_API_KEY', 'SENDGRID_FROM_EMAIL', 'SENDGRID_TECH_EMAIL']) delete process.env[key];
 });
 
-test('successful booking sends exact Cal field answers and two semantically complete emails', async () => {
+test('successful booking sends exact Cal field answers without email delivery', async () => {
   const start = setup();
   const result = await POST(requestFor(start));
   assert.equal(result.status, 201);
@@ -138,17 +131,7 @@ test('successful booking sends exact Cal field answers and two semantically comp
     language: 'en',
   });
 
-  const emailCalls = fetchCalls.filter((call) => call.url.includes('sendgrid.com'));
-  assert.equal(emailCalls.length, 2, 'one email should go to the homeowner and one to dispatch');
-  const emails = emailCalls.map((call) => JSON.parse(call.options.body));
-  const recipients = emails.map((email) => email.personalizations?.[0]?.to?.[0]?.email).sort();
-  assert.deepEqual(recipients, ['alex@example.com', 'tech@prince.test']);
-  for (const email of emails) {
-    const message = email.content?.[0]?.value || '';
-    for (const value of ['Alex Homeowner', '(555) 123-4567', 'alex@example.com', '123 Main Street, Portland', 'Furnace is making a loud rattling noise']) {
-      assert.match(message, new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-    }
-  }
+  assert.equal(fetchCalls.filter((call) => call.url.includes('sendgrid.com')).length, 0);
 });
 
 test('missing address or HVAC issue stops before any outgoing call', async (t) => {
@@ -190,7 +173,7 @@ test('greetings and non-names cannot create a booking or send email', async (t) 
   }
 });
 
-test('a conversational introduction sends the actual name to Cal and both emails', async () => {
+test('a conversational introduction sends the actual name to Cal', async () => {
   const start = setup();
   const result = await POST(requestFor(start, validAttendee({ name: "Hi, I'm Jay Omilana" })));
   assert.equal(result.status, 201);
@@ -198,9 +181,4 @@ test('a conversational introduction sends the actual name to Cal and both emails
   assert.equal(booking.attendee.name, 'Jay Omilana');
   assert.ok(booking.bookingFieldsResponses['service-address']);
   assert.ok(booking.bookingFieldsResponses['hvac-issue']);
-  for (const call of fetchCalls.filter((entry) => entry.url.includes('sendgrid.com'))) {
-    const email = JSON.parse(call.options.body);
-    assert.match(email.content[0].value, /Name: Jay Omilana/);
-    assert.doesNotMatch(email.content[0].value, /Hi, I'm/);
-  }
 });
