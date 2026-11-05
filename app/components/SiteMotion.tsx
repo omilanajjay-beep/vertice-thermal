@@ -8,11 +8,11 @@ export default function SiteMotion() {
   useEffect(() => {
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
-      gsap.fromTo('.hero-copy > *', { opacity: 0, y: 18 }, {
-        opacity: 1, y: 0, duration: 0.75, stagger: 0.075, ease: 'power3.out', clearProps: 'all',
+      gsap.fromTo('.hero-copy > *', { opacity: 0.35, y: 10 }, {
+        opacity: 1, y: 0, duration: 0.95, stagger: 0.09, ease: 'power2.out', clearProps: 'all',
       });
       gsap.fromTo('.hero-visual', { opacity: 0 }, {
-        opacity: 1, duration: 1, ease: 'power2.out', clearProps: 'opacity',
+        opacity: 1, duration: 1.2, ease: 'power2.out', clearProps: 'opacity',
       });
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(({ target, isIntersecting }) => {
@@ -36,10 +36,10 @@ export default function SiteMotion() {
         let y = 0;
         const update = () => {
           frame = 0;
-          panel.style.setProperty('--depth-x', `${(-y * 2.2).toFixed(2)}deg`);
-          panel.style.setProperty('--depth-y', `${(x * 2.2).toFixed(2)}deg`);
-          panel.style.setProperty('--light-x', `${50 + x * 35}%`);
-          panel.style.setProperty('--light-y', `${50 + y * 35}%`);
+          panel.style.setProperty('--depth-x', `${(-y * 1.1).toFixed(2)}deg`);
+          panel.style.setProperty('--depth-y', `${(x * 1.1).toFixed(2)}deg`);
+          panel.style.setProperty('--light-x', `${50 + x * 20}%`);
+          panel.style.setProperty('--light-y', `${50 + y * 20}%`);
         };
         const move = (event: PointerEvent) => {
           if (event.pointerType !== 'mouse' || (event.target instanceof Element && event.target.closest('input, button, a'))) {

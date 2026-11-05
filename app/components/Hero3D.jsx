@@ -322,7 +322,7 @@ export default function Hero3D() {
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
       desiredCamera.copy(cameraGoalRef.current);
-      camera.position.lerp(desiredCamera, reducedMotion ? 1 : 1 - Math.exp(-delta * 3.2));
+      camera.position.lerp(desiredCamera, reducedMotion ? 1 : 1 - Math.exp(-delta * 2.5));
       ledRefs.current.forEach(({ led, glow }) => {
         led.scale.setScalar(1);
         glow.intensity = 0.68;
@@ -443,7 +443,7 @@ export default function Hero3D() {
       renderRef.current();
       return;
     }
-    cameraTweenRef.current = gsap.timeline({ defaults: { duration: 1.35, ease: 'power3.inOut' } })
+    cameraTweenRef.current = gsap.timeline({ defaults: { duration: 1.8, ease: 'power2.inOut' } })
       .to(cameraGoalRef.current, { x: hotspot.camera[0], y: hotspot.camera[1], z: hotspot.camera[2] }, 0)
       .to(targetRef.current, { x: hotspot.target[0], y: hotspot.target[1], z: hotspot.target[2] }, 0);
   };

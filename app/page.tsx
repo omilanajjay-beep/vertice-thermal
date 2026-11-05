@@ -276,8 +276,8 @@ export default function Home() {
     </section>
 
     <section className="reviews-section" id="reviews">
-      <div className="reviews-intro" data-reveal><span className="eyebrow">04 / SERVICE LOG</span><h2>Trust is earned<br /><i>one real visit at a time.</i></h2><p>Every published note should come from completed work in a real home—and be shared with the homeowner’s permission.</p></div>
-      <div className="review-empty glass-panel" data-reveal data-depth><span className="review-seal"><ShieldCheck size={23} /></span><span className="eyebrow">VERIFIED SERVICE NOTES</span><h3>Real work. Real permission.</h3><p>Reviews appear only after a real service is complete and the homeowner agrees to share one. No testimonial or rating is invented here.</p><button onClick={requestSurvey}>Start a service request <ArrowUpRight size={15} /></button></div>
+      <div className="reviews-intro" data-reveal><span className="eyebrow">04 / SERVICE LOG</span><h2>Customer trust<br /><i>starts with real service.</i></h2><p>A customer’s experience deserves to be heard—only after the service is complete and the homeowner agrees to share it.</p></div>
+      <div className="review-empty glass-panel" data-reveal data-depth><span className="review-seal"><ShieldCheck size={23} /></span><span className="eyebrow">VERIFIED SERVICE NOTES</span><h3>Customer experience, honestly recorded.</h3><p>A homeowner may choose to share their experience after real service is complete. Reviews appear only with permission. No testimonial, rating or quote is invented.</p><button onClick={requestSurvey}>Start a service request <ArrowUpRight size={15} /></button></div>
     </section>
 
     <section className="closing-band" data-reveal><div><span className="eyebrow">A MORE CONSIDERED KIND OF COMFORT</span><h2>Let’s start with<br /><i>your home.</i></h2></div><button className="button button-gold" onClick={requestSurvey}>Request a home survey <ArrowUpRight size={15} /></button></section>
