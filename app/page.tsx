@@ -19,8 +19,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react';
-import SiteMotion from './components/SiteMotion';
-import Hero3D from './components/Hero3D';
+import ClimateJourney from './components/ClimateJourney';
 
 type Role = 'assistant' | 'user';
 type ChatMessage = { role: Role; text: string };
@@ -198,91 +197,9 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
 }
 
 export default function Home() {
-  const [partnerCount, setPartnerCount] = useState(3);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const setupTotal = partnerCount * 2500;
-  const monthlyTotal = partnerCount * 1000;
-  const firstYearTotal = setupTotal + monthlyTotal * 12;
-
-  const requestSurvey = () => {
-    setChatOpen(true);
-    setMenuOpen(false);
-  };
-
-  return <main className="min-h-screen bg-ink text-paper">
-    <div className="status-bar"><span><i className="status-indicator" /> RESIDENTIAL CLIMATE / ENGINEERED WITH INTENT</span><span className="status-right">THERMAL COMFORT, CONSIDERED <ArrowUpRight size={12} /></span></div>
-    <nav className="site-nav" aria-label="Main navigation">
-      <a className="brand" href="#top" aria-label="PRINCE HVAC home"><span className="brand-symbol">V</span><span className="brand-name">PRINCE<small>THERMAL</small></span></a>
-      <div id="primary-links" className={`nav-links ${menuOpen ? 'open' : ''}`}>
-        <a onClick={() => setMenuOpen(false)} href="#system">The system</a>
-        <a onClick={() => setMenuOpen(false)} href="#team">Our approach</a>
-        <a onClick={() => setMenuOpen(false)} href="#partners">For contractors</a>
-        <a onClick={() => setMenuOpen(false)} href="#reviews">Service log</a>
-      </div>
-      <button className="nav-cta" onClick={requestSurvey}>Request a survey <ArrowUpRight size={15} /></button>
-      <button className="menu-toggle" aria-expanded={menuOpen} aria-controls="primary-links" onClick={() => setMenuOpen((value) => !value)} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
-    </nav>
-
-    <section className="hero" id="top">
-      <div className="hero-copy">
-        <span className="eyebrow">CLIMATE SYSTEMS / BUILT AROUND YOUR HOME</span>
-        <h1>Comfort,<br /><i>built together.</i></h1>
-        <p>A better HVAC experience starts with a real conversation: your priorities, your home and the professional who helps shape a solution.</p>
-        <div className="hero-actions"><button className="button button-gold" onClick={() => document.getElementById('system')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}>Explore the system <ArrowUpRight size={15} /></button><button className="quiet-link" onClick={requestSurvey}>Arrange a conversation <ArrowRight size={15} /></button></div>
-        <div className="hero-facts"><div><span>01</span><small>Listen<br />first</small></div><div><span>02</span><small>Comfort shaped<br />around your home</small></div><div><span>03</span><small>Care beyond<br />handover</small></div></div>
-      </div>
-      <div className="hero-visual"><Hero3D /><div className="visual-label"><span>PRODUCT STUDY / OUTDOOR UNIT</span><span>INTERACTIVE 3D VIEW</span></div></div>
-      <a className="scroll-cue" href="#system"><span>SCROLL TO EXPLORE</span><ArrowDownRight size={15} /></a>
-    </section>
-
-    <section className="manifesto" aria-label="Design principle"><span>FORM FOLLOWS COMFORT</span><i /> <span>QUIETLY BUILT INTO THE HOME</span><i /> <span>DESIGNED FOR THE LONG VIEW</span></section>
-
-    <section className="section system-section" id="system">
-      <div className="section-heading" data-reveal><span className="eyebrow">01 / THE SYSTEM</span><h2>Comfort is personal.<br /><i>So is the solution.</i></h2><p>A home is more than a floor plan. We listen to what matters, then consider comfort, airflow and equipment as one connected system.</p></div>
-      <div className="feature-stack">
-        <article className="feature-row" data-reveal><span className="feature-index">01</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>Listen before recommending</h3><p>A technician learns how the home is used, what is already installed and what comfort means to you.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
-        <article className="feature-row" data-reveal><span className="feature-index">02</span><div className="feature-icon"><Snowflake size={19} /></div><div><h3>Inverter compressor</h3><p>It adjusts output as demand changes instead of running at one fixed rate—a detail your specialist can explain.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
-        <article className="feature-row" data-reveal><span className="feature-index">03</span><div className="feature-icon"><Wrench size={19} /></div><div><h3>Built for service access</h3><p>A considered thermal pathway with access in mind, helping make future maintenance easier to understand.</p></div><ChevronRight size={17} className="feature-chevron" /></article>
-        <div className="system-note"><ShieldCheck size={15} /><span>Performance and equipment selection depend on the property, climate and a proper site assessment.</span></div>
-      </div>
-    </section>
-
-    <section className="team-section" id="team">
-      <div className="team-intro" data-reveal><div><span className="eyebrow">02 / THE PEOPLE</span><h2>Good work begins<br /><i>when we listen.</i></h2></div><p>You know your home. Your HVAC professional brings the technical eye. The best next step starts when both sides are heard.</p></div>
-      <div className="service-cards">
-        <article className="service-card" data-reveal data-depth><span className="card-number">01 / ASSESS</span><div className="service-glyph"><MapPin size={21} /></div><h3>Listen &amp; assess</h3><p>Share what matters most, what you’ve noticed and what the home already has; the visit starts with your perspective.</p><span className="card-rule" /></article>
-        <article className="service-card" data-reveal data-depth><span className="card-number">02 / INSTALL</span><div className="service-glyph"><Wrench size={21} /></div><h3>A plan you understand</h3><p>Your technician walks through the proposed work and what to expect before installation begins.</p><span className="card-rule" /></article>
-        <article className="service-card" data-reveal data-depth><span className="card-number">03 / CARE</span><div className="service-glyph"><Clock3 size={21} /></div><h3>Support after handover</h3><p>Know what was done, what to keep an eye on and how to follow up when your system needs care.</p><span className="card-rule" /></article>
-      </div>
-      <div className="directory-note" data-reveal><BadgeCheck size={16} /><p><strong>Technician directory</strong><br />Profiles are published only after licensing and service-area details are verified—so homeowners know who they’re considering. No technician credentials appear here without supporting records.</p><button onClick={requestSurvey}>Ask about a visit <ArrowUpRight size={14} /></button></div>
-    </section>
-
-    <section className="partner-section" id="partners">
-      <div className="partner-copy" data-reveal><span className="eyebrow">03 / FOR CONTRACTORS</span><h2>Build a better<br /><i>service model.</i></h2><p>A clear setup and predictable recurring support model for contractors who want a considered customer experience from first survey through aftercare.</p><ul><li><Check size={15} /> A defined setup engagement</li><li><Check size={15} /> A consistent monthly retainer</li><li><Check size={15} /> A service-led homeowner journey</li></ul><button className="partner-link" onClick={requestSurvey}>Discuss partnership <ArrowUpRight size={15} /></button></div>
-      <div className="calculator glass-panel" data-reveal data-depth>
-        <div className="calc-top"><span>PARTNER REVENUE MODEL</span><span className="calc-mark">V / 01</span></div>
-        <h3>Estimate contracted revenue</h3>
-        <label className="range-label" htmlFor="partner-count">Contractor accounts <strong>{partnerCount}</strong></label>
-        <input id="partner-count" type="range" min="1" max="12" step="1" value={partnerCount} onChange={(event) => setPartnerCount(Number(event.target.value))} />
-        <div className="range-ends"><span>1 account</span><span>12 accounts</span></div>
-        <div className="calc-primary"><span>Estimated first-year gross</span><strong>${firstYearTotal.toLocaleString('en-US')}</strong></div>
-        <div className="calc-breakdown"><div><span>One-time setup</span><b>${setupTotal.toLocaleString('en-US')}</b></div><div><span>Monthly retainer</span><b>${monthlyTotal.toLocaleString('en-US')} / mo</b></div></div>
-        <p className="calc-disclaimer">Illustrative contracted revenue before delivery costs. Assumes each account pays $2,500 setup and $1,000 per month for 12 months.</p>
-        <button className="button button-light" onClick={requestSurvey}>Request partnership details <ArrowUpRight size={15} /></button>
-      </div>
-    </section>
-
-    <section className="reviews-section" id="reviews">
-      <div className="reviews-intro" data-reveal><span className="eyebrow">04 / SERVICE LOG</span><h2>Customer trust<br /><i>starts with real service.</i></h2><p>A customer’s experience deserves to be heard—only after the service is complete and the homeowner agrees to share it.</p></div>
-      <div className="review-empty glass-panel" data-reveal data-depth><span className="review-seal"><ShieldCheck size={23} /></span><span className="eyebrow">VERIFIED SERVICE NOTES</span><h3>Customer experience, honestly recorded.</h3><p>A homeowner may choose to share their experience after real service is complete. Reviews appear only with permission. No testimonial, rating or quote is invented.</p><button onClick={requestSurvey}>Start a service request <ArrowUpRight size={15} /></button></div>
-    </section>
-
-    <section className="closing-band" data-reveal><div><span className="eyebrow">A MORE CONSIDERED KIND OF COMFORT</span><h2>Let’s start with<br /><i>your home.</i></h2></div><button className="button button-gold" onClick={requestSurvey}>Request a home survey <ArrowUpRight size={15} /></button></section>
-
-    <footer className="site-footer"><a className="brand" href="#top"><span className="brand-symbol">V</span><span className="brand-name">PRINCE<small>THERMAL</small></span></a><span className="footer-note">CLIMATE SYSTEMS / ARCHITECTURAL COMFORT</span><button onClick={requestSurvey}>Talk to Elena <ArrowUpRight size={14} /></button></footer>
-
-    <SiteMotion />
+  return <main id="top">
+    <ClimateJourney onRequestSurvey={() => setChatOpen(true)} />
     <Concierge open={chatOpen} setOpen={setChatOpen} />
   </main>;
 }

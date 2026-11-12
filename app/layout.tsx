@@ -3,14 +3,14 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'PRINCE HVAC | Architectural Climate Systems',
-  description: 'Thoughtful heat-pump systems, service and contractor partnerships—considered as part of the architecture, not an afterthought.',
+  description: 'A world of comfort, built around you. Explore Prince HVAC cooling, heating and indoor air quality, then arrange a home assessment with Elena.',
   applicationName: 'PRINCE HVAC',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://prince-hvac.vercel.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://prince-hvac.onrender.com'),
   alternates: { canonical: '/' },
   icons: { icon: '/favicon.svg' },
   openGraph: {
     title: 'PRINCE HVAC | Architectural Climate Systems',
-    description: 'Comfort, quietly perfected.',
+    description: 'One home. Every season. Cooling, heating and clean air by Prince HVAC.',
     type: 'website',
     siteName: 'PRINCE HVAC',
   },
