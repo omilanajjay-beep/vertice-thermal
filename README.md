@@ -1,44 +1,45 @@
-# VERTICE THERMAL
+# Paper Worlds
 
-A responsive architectural climate-systems site with a procedural Three.js product study, GSAP camera hotspots, contractor revenue calculator, truthful service/review states, and server-side concierge and Cal.com routes.
+**A little flight. A world of wonder.**
 
-## Local development
+A single-page, real-time Three.js storybook in the existing `omilanajjay-beep/vertice-thermal` Next.js project. It replaces the VERTICE THERMAL homepage on the existing Render service; it does not create or change any other client site.
+
+The opening camera descends from clouds to a folded paper plane on a wooden table. Scrolling carries it through a sunlit meadow, a forest corridor and stone arch, then into a valley of sky cliffs and clouds. Pointer movement adds bounded steering; the bounds close at the narrow passages. A continuous keyframed chase camera, procedural CanvasTextures, soft shafts, pollen, wind, waterfalls, rim light, restrained bloom and a grain/vignette grade render the scene without external image textures.
+
+## Run locally
 
 ```bash
-npm install
-cp .env.example .env.local
+npm ci
 npm run dev
 ```
 
-The front end runs without credentials. Live appointment availability and booking are enabled only after the server-side integrations are configured. No secret belongs in client-side code or in Git.
+The experience itself needs no credentials. Build and validate with:
 
-## Production environment
+```bash
+npm run build
+npm run typecheck
+npm test
+```
 
-Set values in the hosting provider's encrypted environment-variable settings. Do not commit `.env.local` or actual API keys.
+## Controls and capture URLs
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `GROQ_API_KEY` | Optional | Calls Groq's `openai/gpt-oss-120b` for brief conversational acknowledgements using sanitized turn/field labels and issue categories only; raw customer messages and contact/address details are not sent to the model. Friendly local replies work without this key. |
-| `CAL_API_KEY` | Yes for booking | Cal.com API access for live availability and booking. |
-| `CAL_EVENT_TYPE_ID` | One event selector required | Cal.com event type ID. Use this **or** configure the slug selector below. |
-| `CAL_EVENT_TYPE_SLUG` | Alternative event selector | Use with `CAL_USERNAME` or `CAL_TEAM_SLUG`; optionally include `CAL_ORGANIZATION_SLUG`. |
-| `CAL_USERNAME` | Conditional | Required with `CAL_EVENT_TYPE_SLUG` when using a personal event. |
-| `CAL_TEAM_SLUG` | Conditional | Use with `CAL_EVENT_TYPE_SLUG` when using a team event. |
-| `CAL_ORGANIZATION_SLUG` | Optional | Organization identifier for a Cal.com organization event. |
-| `NEXT_PUBLIC_SITE_URL` | Optional | Canonical public site origin for metadata, e.g. the final Netlify site URL. |
+- Scroll or swipe to fly forward and backward.
+- Move the pointer to steer gently; the plane banks and its wings flex.
+- `?demo=1`: plays a 13.6-second cinematic take, including the opening descent.
+- `?p=0.56`: freezes the journey at normalized progress from 0 to 1.
+- `?t=8`: freezes the equivalent progress at 8 seconds of the 13.6-second take.
+- `?ui=0`: hides the interface for captures.
+- `?q=low`: lowers pixel ratio, disables antialiasing and bloom for weaker GPUs.
+- Options can be combined, for example `?p=0.84&ui=0&q=low`.
 
-The live booking route verifies Cal.com availability and requires configured Cal.com values before it can create a booking. Until configured, availability and booking routes fail closed; the front-end site remains usable.
+The end screen's **Start my journey** button resets the capture/flight state and replays the descent. Reduced-motion preferences suppress environmental drift and wing flutter while retaining manual scroll navigation.
 
-## Backend routes
+## Existing deployment
 
-- `POST /api/concierge` — handles greetings and service questions without advancing intake, validates submitted details, and returns `accepted` plus a normalized `value` only for accepted answers. Natural replies include the next question in one message. Optional Groq acknowledgements receive sanitized labels/categories, not raw visitor messages.
-- `GET /api/slots?start=YYYY-MM-DD&end=YYYY-MM-DD&timeZone=...` — returns live availability from Cal.com.
-- `POST /api/book` — re-checks the selected slot, creates the Cal.com booking.
+- Repository: `omilanajjay-beep/vertice-thermal`, branch `main`.
+- Render service: `srv-db9f7lajnfac73c2r3o0`.
+- Public URL: https://vertice-thermal.onrender.com
+- Build: `npm ci && npm run build`.
+- Start: `npm start`.
 
-Each intake answer is sent to the app server for validation. The browser stores only accepted, normalized answers, and the visitor can check or edit their guest name before confirming. Both chat and booking routes reject greeting-only names such as “Hi”; conversational introductions such as “Hi, I’m Jay Omilana” become “Jay Omilana.” The booking route sends that validated name as Cal.com's `attendee.name`, while retaining the `service-address` and `hvac-issue` custom fields and both email templates. Booking data is sent to Cal.com only when the visitor confirms.
-
-Run `npm test` and `npm run typecheck` for local regression checks. Tests mock all booking, availability and model requests; they do not create real appointments or send emails.
-
-## Netlify deployment
-
-The site uses Next.js App Router, which Netlify supports through its automatically managed OpenNext adapter. Import the private repository `https://github.com/omilanajjay-beep/vertice-thermal` and deploy the `main` branch. Use the **Next.js** framework preset, build command `npm run build`, and Node.js 22. Leave the publish directory to Netlify's automatic Next.js adapter detection; do not force a static export or a custom publish directory. Add the environment variables above in Netlify's encrypted site environment settings, then deploy. Set `NEXT_PUBLIC_SITE_URL` to the assigned production origin after Netlify creates the site and redeploy if necessary.
+The existing `/api/book`, `/api/slots`, `/api/concierge` routes and their Cal.com configuration are retained unchanged for rollback/compatibility. The Paper Worlds homepage does not call those routes, expose the previous HVAC chat, send emails, create bookings, or require their API keys. Credentials must remain in encrypted hosting environment variables and must not be committed to Git. No booking/webhook/email configuration is changed by this redesign.
