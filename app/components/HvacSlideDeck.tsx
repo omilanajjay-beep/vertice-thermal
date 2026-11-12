@@ -107,7 +107,7 @@ function formatSlot(start: string, timeZone: string) {
   }).format(new Date(start));
 }
 
-function ChatPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'assistant', text: 'Hi, I’m Elena with VERTICE. I can help coordinate a visit. What name should I use?' },
   ]);

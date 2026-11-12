@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import * as THREE from 'three';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 const HOTSPOTS = [
   { id: 'compressor', label: 'Inverter compressor', note: 'Variable output', left: '12%', top: '62%', anchor: [-1.02, 0.16, 0.78], camera: [-3.0, 1.65, 5.5], target: [-0.82, 0.18, 0.12] },
@@ -82,7 +84,9 @@ function createConcreteTexture() {
 }
 
 function box(width, height, depth, material, position, parent, cast = true, receive = true) {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+  const minimum = Math.min(width, height, depth);
+  const geometry = minimum > 0.052 ? new RoundedBoxGeometry(width, height, depth, 3, Math.min(0.025, minimum * 0.15)) : new THREE.BoxGeometry(width, height, depth);
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(...position);
   mesh.castShadow = cast;
   mesh.receiveShadow = receive;
@@ -111,7 +115,7 @@ function createCopperCore(scene, copperMaterial) {
   return group;
 }
 
-export default function Hero3D() {
+export default function Hero3D({ onReady, finish = 'metal' } = {}) {
   const mountRef = useRef(null);
   const cameraRef = useRef(null);
   const targetRef = useRef(new THREE.Vector3(0, 0.2, 0.05));
@@ -121,7 +125,10 @@ export default function Hero3D() {
   const pointerRef = useRef(new THREE.Vector2());
   const hotspotRefs = useRef({});
   const reducedMotionRef = useRef(false);
+  const dragStateRef = useRef({ angle: 0, velocity: 0, active: false, lastX: 0 });
   const fanRef = useRef(null);
+  const telemetryRef = useRef(null);
+  const louverRefs = useRef([]);
   const ledRefs = useRef([]);
   const [active, setActive] = useState('fan');
 
@@ -133,8 +140,38 @@ export default function Hero3D() {
     let reducedMotion = reducedMotionQuery.matches;
     reducedMotionRef.current = reducedMotion;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#171818');
-    scene.fog = new THREE.Fog('#171818', 10, 27);
+    scene.background = null;
+    scene.fog = new THREE.Fog('#11130e', 13, 30);
+    const environmentCanvas = document.createElement('canvas');
+    environmentCanvas.width = 1024;
+    environmentCanvas.height = 512;
+    const environmentContext = environmentCanvas.getContext('2d');
+    if (environmentContext) {
+      const environment = environmentContext.createLinearGradient(0, 0, 0, 512);
+      environment.addColorStop(0, '#252820');
+      environment.addColorStop(0.42, '#9b9f88');
+      environment.addColorStop(0.56, '#55584c');
+      environment.addColorStop(1, '#151711');
+      environmentContext.fillStyle = environment;
+      environmentContext.fillRect(0, 0, 1024, 512);
+      [[116, 120, 112, 154], [368, 112, 74, 135], [655, 102, 148, 168], [911, 124, 72, 132]].forEach(([x, y, width, height]) => {
+        environmentContext.save();
+        environmentContext.shadowColor = 'rgba(236,239,219,.7)';
+        environmentContext.shadowBlur = 29;
+        environmentContext.fillStyle = 'rgba(242,241,222,.78)';
+        environmentContext.fillRect(x, y, width, height);
+        environmentContext.restore();
+      });
+      environmentContext.fillStyle = 'rgba(201,243,72,.28)';
+      environmentContext.fillRect(513, 96, 7, 162);
+      environmentContext.fillStyle = 'rgba(28,30,23,.7)';
+      environmentContext.fillRect(0, 327, 1024, 4);
+    }
+    const environmentTexture = new THREE.CanvasTexture(environmentCanvas);
+    environmentTexture.mapping = THREE.EquirectangularReflectionMapping;
+    environmentTexture.colorSpace = THREE.SRGBColorSpace;
+    scene.environment = environmentTexture;
+    scene.environmentIntensity = 0.8;
 
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 80);
     camera.position.set(3.6, 2.55, 7.35);
@@ -142,7 +179,14 @@ export default function Hero3D() {
     cameraRef.current = camera;
     cameraGoalRef.current.copy(camera.position);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+    } catch {
+      mount.dataset.webglUnavailable = 'true';
+      onReady?.();
+      return undefined;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2.25));
     renderer.shadowMap.enabled = !mobile;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -153,9 +197,22 @@ export default function Hero3D() {
     renderer.domElement.style.display = 'block';
     mount.appendChild(renderer.domElement);
 
-    const ambient = new THREE.HemisphereLight('#fff7e8', '#1d2023', 1.7);
+    let environmentDisposed = false;
+    let studioEnvironment;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    pmrem.compileEquirectangularShader();
+    new RGBELoader().load('/environments/studio-small-09.hdr', (hdr) => {
+      if (environmentDisposed) { hdr.dispose(); return; }
+      studioEnvironment = pmrem.fromEquirectangular(hdr);
+      scene.environment = studioEnvironment.texture;
+      scene.environmentIntensity = finish === 'white' ? 0.65 : 0.9;
+      hdr.dispose();
+      renderRef.current();
+      onReady?.();
+    }, undefined, () => { onReady?.(); /* The procedural studio environment remains available offline. */ });
+    const ambient = new THREE.HemisphereLight('#f4f3ec', '#1d2023', 0.78);
     scene.add(ambient);
-    const key = new THREE.DirectionalLight('#f2dbb6', mobile ? 3.1 : 4.0);
+    const key = new THREE.DirectionalLight('#f3f2e7', mobile ? 2.7 : 3.1);
     key.position.set(3.5, 6.8, 5.5);
     key.castShadow = !mobile;
     key.shadow.mapSize.set(2048, 2048);
@@ -164,45 +221,78 @@ export default function Hero3D() {
     key.shadow.camera.top = 6;
     key.shadow.camera.bottom = -4;
     key.shadow.bias = -0.0005;
+    key.shadow.normalBias = 0.025;
+    key.shadow.radius = 5;
     scene.add(key);
-    const coolRim = new THREE.PointLight('#a6bed0', 34, 12, 1.6);
+    const coolRim = new THREE.PointLight('#dce9e1', 20, 12, 1.6);
     coolRim.position.set(-4.1, 2.5, 2.2);
     scene.add(coolRim);
-    const warmFill = new THREE.PointLight('#c5a880', 18, 10, 1.5);
+    const warmFill = new THREE.PointLight('#e8e5d2', 10, 10, 1.5);
     warmFill.position.set(3.1, 3.2, -0.2);
     scene.add(warmFill);
 
-    const slateTexture = createSlateTexture();
-    const concreteTexture = createConcreteTexture();
-    const slateMaterial = new THREE.MeshStandardMaterial({ color: '#b6b4b0', map: slateTexture, roughness: 0.92, metalness: 0.02 });
-    const concreteMaterial = new THREE.MeshStandardMaterial({ color: '#b7b3ac', map: concreteTexture, roughness: 0.84, metalness: 0.02 });
-    const wall = new THREE.Mesh(new THREE.PlaneGeometry(18, 9), slateMaterial);
-    wall.position.set(0, 2.25, -2.15);
-    wall.receiveShadow = true;
-    scene.add(wall);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(22, 15), concreteMaterial);
+    const floorMaterial = new THREE.ShadowMaterial({ opacity: finish === 'white' ? 0.2 : 0.34 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(22, 15), floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = -1.02;
     floor.receiveShadow = true;
     scene.add(floor);
-    const returnWall = new THREE.Mesh(new THREE.PlaneGeometry(13, 8), slateMaterial);
-    returnWall.rotation.y = Math.PI / 2;
-    returnWall.position.set(-8.2, 2.1, 3.0);
-    returnWall.receiveShadow = true;
-    scene.add(returnWall);
+    const contactCanvas = document.createElement('canvas');
+    contactCanvas.width = contactCanvas.height = 128;
+    const contactContext = contactCanvas.getContext('2d');
+    if (contactContext) {
+      const contactGradient = contactContext.createRadialGradient(64, 64, 9, 64, 64, 64);
+      contactGradient.addColorStop(0, 'rgba(0,0,0,.62)');
+      contactGradient.addColorStop(.5, 'rgba(0,0,0,.25)');
+      contactGradient.addColorStop(1, 'rgba(0,0,0,0)');
+      contactContext.fillStyle = contactGradient;
+      contactContext.fillRect(0, 0, 128, 128);
+    }
+    const contactTexture = new THREE.CanvasTexture(contactCanvas);
+    const contactShadow = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 2.9), new THREE.MeshBasicMaterial({ map: contactTexture, transparent: true, depthWrite: false, opacity: .78 }));
+    contactShadow.rotation.x = -Math.PI / 2;
+    contactShadow.position.set(0, -1.009, .05);
+    scene.add(contactShadow);
 
-    const plinthMaterial = new THREE.MeshStandardMaterial({ color: '#353638', roughness: 0.76, metalness: 0.25 });
+    const plinthMaterial = new THREE.MeshStandardMaterial({ color: '#202319', roughness: 0.62, metalness: 0.34 });
     box(3.45, 0.1, 1.55, plinthMaterial, [0, -0.94, 0.1], scene);
     const footMaterial = new THREE.MeshStandardMaterial({ color: '#17191b', roughness: 0.58, metalness: 0.45 });
     for (const x of [-1.18, 1.18]) {
       box(0.18, 0.17, 0.18, footMaterial, [x, -0.84, 0.12], scene);
     }
 
-    const aluminum = new THREE.MeshPhysicalMaterial({ color: '#aeb1b0', metalness: 0.88, roughness: 0.27, clearcoat: 0.72, clearcoatRoughness: 0.22 });
-    const fasciaMaterial = new THREE.MeshStandardMaterial({ color: '#202326', metalness: 0.58, roughness: 0.3 });
-    const grilleMaterial = new THREE.MeshStandardMaterial({ color: '#767d7e', metalness: 0.86, roughness: 0.25 });
+    const finishCanvas = document.createElement('canvas');
+    finishCanvas.width = 512;
+    finishCanvas.height = 512;
+    const finishContext = finishCanvas.getContext('2d');
+    if (finishContext) {
+      finishContext.fillStyle = '#cfcfcf';
+      finishContext.fillRect(0, 0, 512, 512);
+      let finishSeed = 11821;
+      const finishRandom = () => { finishSeed = (finishSeed * 1664525 + 1013904223) >>> 0; return finishSeed / 4294967296; };
+      for (let line = 0; line < 620; line += 1) {
+        const brightness = 96 + Math.floor(finishRandom() * 92);
+        finishContext.strokeStyle = `rgba(${brightness},${brightness},${brightness},${0.04 + finishRandom() * 0.16})`;
+        finishContext.lineWidth = 1 + finishRandom() * 2;
+        finishContext.beginPath();
+        finishContext.moveTo(0, line * 0.83);
+        finishContext.lineTo(512, line * 0.83 + (finishRandom() - 0.5) * 1.5);
+        finishContext.stroke();
+      }
+      for (let grain = 0; grain < 3600; grain += 1) {
+        const gray = 105 + Math.floor(finishRandom() * 110);
+        finishContext.fillStyle = `rgba(${gray},${gray},${gray},${0.018 + finishRandom() * 0.055})`;
+        finishContext.fillRect(finishRandom() * 512, finishRandom() * 512, 1 + finishRandom() * 2, 1);
+      }
+    }
+    const finishTexture = new THREE.CanvasTexture(finishCanvas);
+    finishTexture.wrapS = finishTexture.wrapT = THREE.RepeatWrapping;
+    finishTexture.repeat.set(3, 3);
+    const aluminum = new THREE.MeshPhysicalMaterial({ color: finish === 'white' ? '#fafaf2' : '#e0e1d6', roughnessMap: finishTexture, metalness: finish === 'white' ? 0.13 : 0.74, roughness: finish === 'white' ? 0.52 : 0.28, clearcoat: 0.86, clearcoatRoughness: 0.18 });
+    const fasciaMaterial = new THREE.MeshStandardMaterial({ color: finish === 'white' ? '#c4c7bb' : '#20241b', metalness: finish === 'white' ? 0.1 : 0.58, roughness: 0.3 });
+    const grilleMaterial = new THREE.MeshStandardMaterial({ color: finish === 'white' ? '#f6f7ee' : '#7c8173', metalness: finish === 'white' ? 0.16 : 0.84, roughness: 0.3 });
     const copperMaterial = new THREE.MeshStandardMaterial({ color: '#c77d4e', metalness: 0.82, roughness: 0.23, emissive: '#381c10', emissiveIntensity: 0.12 });
-    const darkMaterial = new THREE.MeshStandardMaterial({ color: '#242729', metalness: 0.68, roughness: 0.35 });
+    const darkMaterial = new THREE.MeshStandardMaterial({ color: '#24271e', metalness: 0.68, roughness: 0.35 });
 
     // Satin aluminum enclosure and folded edges.
     box(3.1, 2.26, 1.42, aluminum, [0, 0.14, 0.0], scene);
@@ -222,6 +312,11 @@ export default function Hero3D() {
       const rib = box(0.018, 1.9, 0.025, grilleMaterial, [i * 0.24, 0.14, 0.784], scene, false, false);
       rib.material = grilleMaterial;
     }
+    louverRefs.current = Array.from({ length: 9 }, (_, index) => {
+      const louver = box(0.035, 0.042, 1.08, grilleMaterial, [1.596, -0.55 + index * 0.16, 0], scene, false, false);
+      louver.rotation.y = Math.sin(index * 0.7) * 0.035;
+      return louver;
+    });
 
     // Copper exchanger visible through the open fin field.
     createCopperCore(scene, copperMaterial);
@@ -266,7 +361,7 @@ export default function Hero3D() {
     hub.rotation.x = Math.PI / 2;
     hub.position.copy(fanCenter).setZ(fanCenter.z + 0.065);
     scene.add(hub);
-    const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.19, 32), copperMaterial);
+    const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.19, 32), darkMaterial);
     hubCap.rotation.x = Math.PI / 2;
     hubCap.position.copy(fanCenter).setZ(fanCenter.z + 0.15);
     scene.add(hubCap);
@@ -274,8 +369,90 @@ export default function Hero3D() {
       const spoke = box(0.018, 1.36, 0.03, grilleMaterial, [fanCenter.x, fanCenter.y, fanCenter.z + 0.045], scene, false, false);
       spoke.rotation.z = i * Math.PI / 4;
     }
+    for (let ringIndex = 0; ringIndex < 4; ringIndex += 1) {
+      const guardRing = new THREE.Mesh(new THREE.TorusGeometry(0.42 + ringIndex * 0.105, 0.009, 8, 72), grilleMaterial);
+      guardRing.position.copy(fanCenter).setZ(fanCenter.z + 0.052);
+      scene.add(guardRing);
+    }
+    const fastenerMaterial = new THREE.MeshStandardMaterial({ color: '#c8cbbb', metalness: 0.88, roughness: 0.26 });
+    for (const x of [-1.38, 1.38]) {
+      for (const y of [-0.91, 1.08]) {
+        const fastener = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.018, 20), fastenerMaterial);
+        fastener.rotation.x = Math.PI / 2;
+        fastener.position.set(x, y, 0.795);
+        scene.add(fastener);
+      }
+    }
 
-    // Restrained warm status emblem, with no printed branding or text.
+    // A satin-metal control plate carries the user's existing VERTICE branding.
+    const plate = box(1.06, 0.31, 0.045, darkMaterial, [0.98, 1.105, 0.82], scene, false, false);
+    const plateCanvas = document.createElement('canvas');
+    plateCanvas.width = 1600;
+    plateCanvas.height = 256;
+    const plateContext = plateCanvas.getContext('2d');
+    if (plateContext) {
+      const brushed = plateContext.createLinearGradient(0, 0, 1600, 256);
+      brushed.addColorStop(0, '#35382e');
+      brushed.addColorStop(0.52, '#1e211b');
+      brushed.addColorStop(1, '#30342a');
+      plateContext.fillStyle = brushed;
+      plateContext.fillRect(0, 0, 1600, 256);
+      for (let line = 0; line < 72; line += 1) {
+        plateContext.strokeStyle = `rgba(226,232,205,${line % 3 === 0 ? 0.07 : 0.025})`;
+        plateContext.lineWidth = 1;
+        plateContext.beginPath();
+        plateContext.moveTo(0, line * 3.7);
+        plateContext.lineTo(1600, line * 3.7);
+        plateContext.stroke();
+      }
+      plateContext.fillStyle = '#c9f348';
+      plateContext.font = '500 25px monospace';
+      plateContext.fillText('INVERTER  /  LIVE', 42, 64);
+      plateContext.fillStyle = '#eceee2';
+      plateContext.font = '500 36px monospace';
+      plateContext.fillText('VERTICE THERMAL · Commercial Grade 2026©', 42, 148);
+      plateContext.fillStyle = 'rgba(235,238,222,.62)';
+      plateContext.font = '400 18px monospace';
+      plateContext.fillText('VARIABLE OUTPUT    •    QUIET AIRFLOW    •    SERVICE READY', 43, 202);
+    }
+    const plateTexture = new THREE.CanvasTexture(plateCanvas);
+    plateTexture.colorSpace = THREE.SRGBColorSpace;
+    const plateScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.99, 0.158), new THREE.MeshBasicMaterial({ map: plateTexture }));
+    plateScreen.position.set(0.98, 1.105, 0.845);
+    scene.add(plateScreen);
+
+    // A 1,100-point heat-field mesh is deformed per frame in its GPU vertex shader.
+    const particleCount = 1100;
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleSeeds = new Float32Array(particleCount);
+    let seed = 73261;
+    const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    for (let index = 0; index < particleCount; index += 1) {
+      const angle = random() * Math.PI * 2;
+      const radius = 0.18 + Math.sqrt(random()) * 1.17;
+      particlePositions[index * 3] = Math.cos(angle) * radius;
+      particlePositions[index * 3 + 1] = -0.04 + (random() - 0.5) * 1.72;
+      particlePositions[index * 3 + 2] = 0.36 + Math.sin(angle) * radius * 0.52;
+      particleSeeds[index] = random();
+    }
+    const telemetryGeometry = new THREE.BufferGeometry();
+    telemetryGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    telemetryGeometry.setAttribute('aSeed', new THREE.BufferAttribute(particleSeeds, 1));
+    const telemetryMaterial = new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 } },
+      vertexShader: `attribute float aSeed; uniform float uTime; varying float vSeed; varying float vAlpha; void main(){ vec3 p=position; float phase=uTime*0.82+aSeed*6.28318; p.x+=sin(phase+p.y*2.4)*0.046; p.y+=cos(phase*0.72+p.x*2.2)*0.079; p.z+=sin(phase+p.x*1.7)*0.11; vec4 mv=modelViewMatrix*vec4(p,1.0); gl_Position=projectionMatrix*mv; gl_PointSize=clamp((2.3+2.1*sin(phase))*210.0/-mv.z,1.0,6.5); vSeed=aSeed; vAlpha=0.42+0.36*(0.5+0.5*sin(phase)); }`,
+      fragmentShader: `varying float vSeed; varying float vAlpha; void main(){ vec2 q=gl_PointCoord-0.5; float d=length(q); float soft=1.0-smoothstep(0.08,0.5,d); vec3 cold=vec3(0.42,0.72,0.78); vec3 warm=vec3(0.78,0.94,0.28); vec3 tint=mix(cold,warm,smoothstep(0.28,0.78,vSeed)); gl_FragColor=vec4(tint,soft*vAlpha*.18); }`,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const telemetry = new THREE.Points(telemetryGeometry, telemetryMaterial);
+    telemetry.renderOrder = 4;
+    telemetry.visible = finish !== 'white';
+    scene.add(telemetry);
+    telemetryRef.current = telemetryMaterial;
+
+    // Restrained lime and warm status indicators show the unit is running.
     const ledMaterial = new THREE.MeshBasicMaterial({ color: '#d9e7cf' });
     ledRefs.current = [-0.95, -0.73, -0.51].map((x, index) => {
       const led = new THREE.Mesh(new THREE.SphereGeometry(0.046, 18, 18), ledMaterial.clone());
@@ -288,18 +465,14 @@ export default function Hero3D() {
       return { led, glow };
     });
 
-    // Fine terrace seams, a raised threshold and distant architectural fins.
+    // Fine floor seams keep the isolated product study grounded.
     const seamMaterial = new THREE.MeshStandardMaterial({ color: '#77736c', roughness: 0.75 });
     for (let i = -4; i <= 4; i += 1) {
       const seam = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 7.5), seamMaterial);
       seam.position.set(i * 1.7, -1.013, -0.7);
+      seam.visible = false;
       scene.add(seam);
     }
-    for (let i = 0; i < 5; i += 1) {
-      const fin = box(0.055, 3.1, 0.07, darkMaterial, [3.1 + i * 0.52, 0.45, -2.02], scene, true, true);
-      fin.rotation.z = -0.02;
-    }
-
     const resize = () => {
       const bounds = mount.getBoundingClientRect();
       const width = Math.max(bounds.width, 1);
@@ -314,15 +487,43 @@ export default function Hero3D() {
     window.addEventListener('resize', onResize, { passive: true });
     const interactionRoot = mount.parentElement || mount;
     const onPointerMove = (event) => {
+      const drag = dragStateRef.current;
+      if (drag.active) {
+        const delta = event.clientX - drag.lastX;
+        drag.lastX = event.clientX;
+        drag.angle += delta * 0.009;
+        drag.velocity = delta * 0.00048;
+        pointerRef.current.set(0, 0);
+        if (reducedMotion) renderRef.current();
+        return;
+      }
       if (mobile || reducedMotion) return;
       const bounds = interactionRoot.getBoundingClientRect();
       const x = ((event.clientX - bounds.left) / Math.max(bounds.width, 1)) * 2 - 1;
       const y = 1 - ((event.clientY - bounds.top) / Math.max(bounds.height, 1)) * 2;
       pointerRef.current.set(THREE.MathUtils.clamp(x, -1, 1), THREE.MathUtils.clamp(y, -1, 1));
     };
+    const onPointerDown = (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      const drag = dragStateRef.current;
+      drag.active = true;
+      drag.lastX = event.clientX;
+      drag.velocity = 0;
+      renderer.domElement.style.cursor = 'grabbing';
+      try { renderer.domElement.setPointerCapture(event.pointerId); } catch { /* Pointer capture is not available in every embedded browser. */ }
+    };
+    const onPointerUp = (event) => {
+      dragStateRef.current.active = false;
+      renderer.domElement.style.cursor = 'grab';
+      try { if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId); } catch { /* The pointer may already have been released by the browser. */ }
+      if (reducedMotion) renderRef.current();
+    };
     const onPointerLeave = () => pointerRef.current.set(0, 0);
     interactionRoot.addEventListener('pointermove', onPointerMove, { passive: true });
     interactionRoot.addEventListener('pointerleave', onPointerLeave, { passive: true });
+    renderer.domElement.addEventListener('pointerdown', onPointerDown, { passive: true });
+    renderer.domElement.addEventListener('pointerup', onPointerUp, { passive: true });
+    renderer.domElement.addEventListener('pointercancel', onPointerUp, { passive: true });
 
     let frame = 0;
     let running = false;
@@ -332,22 +533,32 @@ export default function Hero3D() {
     const desiredCamera = new THREE.Vector3();
     const desiredLook = new THREE.Vector3();
     const projectedHotspot = new THREE.Vector3();
+    const orbitAxis = new THREE.Vector3(0, 1, 0);
     const renderFrame = (now = performance.now()) => {
       if (disposed) return;
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
       const pointer = pointerRef.current;
       const drift = reducedMotion ? 0 : Math.sin(elapsed * 0.34) * 0.035;
-      desiredCamera.set(
-        cameraGoalRef.current.x + (reducedMotion || mobile ? 0 : pointer.x * 0.2) + drift,
-        cameraGoalRef.current.y + (reducedMotion || mobile ? 0 : pointer.y * 0.11) + (reducedMotion ? 0 : Math.sin(elapsed * 0.47) * 0.018),
-        cameraGoalRef.current.z + (reducedMotion || mobile ? 0 : pointer.x * 0.045),
-      );
-      if (reducedMotion) camera.position.copy(cameraGoalRef.current);
+      const idleOrbit = reducedMotion ? 0 : Math.sin(elapsed * 0.19) * 0.038;
+      const drag = dragStateRef.current;
+      if (!drag.active && !reducedMotion && Math.abs(drag.velocity) > 0.00001) {
+        drag.angle += drag.velocity * delta * 60;
+        drag.velocity *= Math.exp(-delta * 3.7);
+      }
+      desiredCamera.copy(cameraGoalRef.current).sub(targetRef.current).applyAxisAngle(orbitAxis, drag.angle + idleOrbit).add(targetRef.current);
+      desiredCamera.x += (reducedMotion || mobile ? 0 : pointer.x * 0.2) + drift;
+      desiredCamera.y += (reducedMotion || mobile ? 0 : pointer.y * 0.11) + (reducedMotion ? 0 : Math.sin(elapsed * 0.47) * 0.018);
+      desiredCamera.z += reducedMotion || mobile ? 0 : pointer.x * 0.045;
+      if (reducedMotion) camera.position.copy(desiredCamera);
       else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.2));
       if (!reducedMotion) {
-        rotor.rotation.z += delta * (mobile ? 2.2 : 2.65);
+        rotor.rotation.z += delta * ((mobile ? 2.2 : 2.65) + Math.min(Math.abs(drag.velocity) * 22, 4));
         warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18;
+        louverRefs.current.forEach((louver, index) => {
+          louver.rotation.y = Math.sin(elapsed * 1.35 + index * 0.38) * 0.065 + drag.velocity * 1.4;
+        });
+        if (telemetryRef.current) telemetryRef.current.uniforms.uTime.value = elapsed;
       }
       ledRefs.current.forEach(({ led, glow }, index) => {
         const pulse = reducedMotion ? 1 : 0.78 + Math.sin(elapsed * 2.1 + index * 1.6) * 0.16;
@@ -434,6 +645,9 @@ export default function Hero3D() {
       window.removeEventListener('resize', onResize);
       interactionRoot.removeEventListener('pointermove', onPointerMove);
       interactionRoot.removeEventListener('pointerleave', onPointerLeave);
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      renderer.domElement.removeEventListener('pointercancel', onPointerUp);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       if (reducedMotionQuery.removeEventListener) reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
       else reducedMotionQuery.removeListener?.(onReducedMotionChange);
@@ -446,16 +660,23 @@ export default function Hero3D() {
           const materials = Array.isArray(object.material) ? object.material : [object.material];
           materials.forEach((material) => {
             if (material.map) material.map.dispose();
+            if (material.roughnessMap) material.roughnessMap.dispose();
             material.dispose();
           });
         }
       });
+      environmentTexture.dispose();
+      environmentDisposed = true;
+      studioEnvironment?.dispose();
+      pmrem.dispose();
       renderer.dispose();
       renderer.domElement.remove();
       mount.replaceChildren();
       ledRefs.current = [];
       hotspotRefs.current = {};
       fanRef.current = null;
+      telemetryRef.current = null;
+      louverRefs.current = [];
     };
   }, []);
 

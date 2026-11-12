@@ -1,0 +1,6 @@
+Studio Small 09 HDRI
+Author: Sergej Majboroda
+Source: https://polyhaven.com/a/studio_small_09
+License: CC0 1.0 Universal — https://polyhaven.com/license
+Local file: studio-small-09.hdr (1K)
+Used as the reflection/lighting environment of the VERTICE THERMAL live 3D product study.

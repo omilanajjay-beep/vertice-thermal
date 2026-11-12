@@ -1,5 +1,5 @@
-import HvacSlideDeck from './components/HvacSlideDeck';
+import VerticeLanding from './components/VerticeLanding';
 
 export default function Home() {
-  return <HvacSlideDeck />;
+  return <VerticeLanding />;
 }

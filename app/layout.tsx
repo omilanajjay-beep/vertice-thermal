@@ -2,15 +2,15 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'VERTICE THERMAL — HVAC Response Systems',
-  description: 'A field briefing for local HVAC owners on after-hours calls, lead response, and recovered revenue.',
+  title: 'VERTICE THERMAL — Precision Climate',
+  description: 'Considered heating, cooling, installation and seasonal care. Explore precision climate systems with VERTICE THERMAL.',
   applicationName: 'VERTICE THERMAL',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://vertice-thermal.onrender.com'),
   alternates: { canonical: '/' },
   icons: { icon: '/favicon.svg' },
   openGraph: {
-    title: 'VERTICE THERMAL — HVAC Response Systems',
-    description: 'An exclusive breakdown for US HVAC owners.',
+    title: 'VERTICE THERMAL — Precision Climate',
+    description: 'Thoughtful heating and cooling, from the first site visit to the seasons ahead.',
     type: 'website',
     siteName: 'VERTICE THERMAL',
   },
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#000000',
+  themeColor: '#11130f',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
