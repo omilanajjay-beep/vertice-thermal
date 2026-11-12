@@ -199,7 +199,7 @@ function Concierge({ open, setOpen }: { open: boolean; setOpen: (next: boolean) 
 export default function Home() {
   const [chatOpen, setChatOpen] = useState(false);
   return <main id="top">
-    <ClimateJourney onRequestSurvey={() => setChatOpen(true)} />
+    <ClimateJourney chatOpen={chatOpen} onRequestSurvey={() => setChatOpen(true)} />
     <Concierge open={chatOpen} setOpen={setChatOpen} />
   </main>;
 }

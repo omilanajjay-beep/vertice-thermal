@@ -185,3 +185,41 @@
   .climate-portal-shell { transform: none !important; }
   .climate-world.is-active { transform: none; }
 }
+
+/* Prince's continuous comfort journey: the portal remains the opening chapter. */
+.climate-site { --climate-green: #00ff87; background: #091710; color: #f5f5ed; overflow-x: clip; }
+.climate-site > .climate-experience { scroll-margin-top: 0; }
+.climate-grain { opacity: .025; }
+.climate-world { image-rendering: auto; }
+.climate-shade { background: linear-gradient(90deg, #07141088, #07141022 49%, #0714100a 70%, #07141055), linear-gradient(0deg, #06120ff0, #07141055 25%, transparent 65%, #07141044); }
+.climate-copy h1 { text-shadow: 0 8px 50px #00000021; }
+.climate-scroll { display: inline-flex; align-items: center; gap: 12px; padding: 10px 0; border: 0; color: #e7f4e9; background: none; font: 6px var(--mono); letter-spacing: .16em; }
+.climate-scroll svg { color: var(--climate-green); animation: climate-scroll-cue 2s ease-in-out infinite; }
+@keyframes climate-scroll-cue { 50% { transform: translateY(4px); } }
+.climate-autoflip { position: absolute; z-index: 7; left: 6vw; top: 115px; width: 136px; }
+.climate-autoflip > button { display: inline-flex; align-items: center; gap: 9px; padding: 9px 0; border: 0; background: transparent; color: #edf8f0; font: 6px var(--mono); letter-spacing: .12em; }
+.climate-autoflip > button svg { color: var(--climate-green); }
+.climate-auto-track { display: block; height: 1px; margin-top: 5px; background: #ffffff30; overflow: hidden; }
+.climate-auto-track i { display: block; height: 100%; width: 0; background: var(--climate-green); }
+.climate-auto-track i.is-playing { animation: climate-auto-progress 8s linear forwards; }
+@keyframes climate-auto-progress { to { width: 100%; } }
+.is-loading .climate-autoflip { opacity: 0; }
+.climate-site button:focus-visible, .climate-site a:focus-visible { outline: 2px solid #91ffc4; outline-offset: 6px; }
+.climate-site ~ .chat-launcher { width: 48px; height: 48px; bottom: 22px; background: #12251de6; border-color: #baffdc55; }
+.climate-site-footer { padding: 48px 6vw 35px; display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; gap: 28px; border-top: 1px solid #d5f4de25; background: #08120e; }
+.climate-site-footer > span:not(.climate-brand) { color: #95a89c; font: 7px var(--mono); letter-spacing: .18em; }
+.climate-site-footer a { display: flex; align-items: center; gap: 13px; color: #d6e8da; font: 7px var(--mono); letter-spacing: .08em; }
+.climate-site-footer a svg { color: var(--climate-green); }
+.climate-site-footer > small { grid-column: 1/-1; color: #7f9387; font-size: 9px; line-height: 1.7; }
+@media (max-width: 700px) {
+  .climate-autoflip { top: 92px; width: 120px; }
+  .climate-autoflip > button { font-size: 5px; }
+  .climate-footer-tag { display: none; }
+  .climate-scroll { font-size: 5px; gap: 6px; letter-spacing: .04em; }
+  .climate-footer { right: 84px; }
+  .climate-site-footer { grid-template-columns: 1fr; gap: 25px; padding: 40px 6vw 80px; }
+  .climate-site-footer > small { grid-column: 1; max-width: 280px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .climate-scroll svg, .climate-auto-track i.is-playing { animation: none; }
+}
