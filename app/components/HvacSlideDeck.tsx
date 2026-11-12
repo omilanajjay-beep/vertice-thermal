@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import type { IntakeStep } from '../lib/intake';
 
 type Slide = {
@@ -319,10 +319,32 @@ function ChatPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
 export default function HvacSlideDeck() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [chatOpen, setChatOpen] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [bookHovered, setBookHovered] = useState(false);
+  const [isTurning, setIsTurning] = useState(false);
+  const turnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const slide = slides[currentSlide];
 
-  const nextSlide = () => setCurrentSlide((current) => Math.min(slides.length - 1, current + 1));
-  const prevSlide = () => setCurrentSlide((current) => Math.max(0, current - 1));
+  const turnTo = useCallback((newIndex: number) => {
+    if (newIndex === currentSlide || isTurning) return;
+    if (turnTimer.current) clearTimeout(turnTimer.current);
+    setIsTurning(true);
+    turnTimer.current = setTimeout(() => {
+      setCurrentSlide(newIndex);
+      setIsTurning(false);
+      turnTimer.current = null;
+    }, 400);
+  }, [currentSlide, isTurning]);
+
+  useEffect(() => () => {
+    if (turnTimer.current) clearTimeout(turnTimer.current);
+  }, []);
+
+  useEffect(() => {
+    if (!autoPlay || bookHovered || isTurning) return;
+    const timer = window.setTimeout(() => turnTo((currentSlide + 1) % slides.length), 4500);
+    return () => window.clearTimeout(timer);
+  }, [autoPlay, bookHovered, currentSlide, isTurning, turnTo]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -334,89 +356,105 @@ export default function HvacSlideDeck() {
       if (target instanceof HTMLElement && (target.closest('[data-chat-panel]') || target.closest('button, a, input, textarea, select, [contenteditable="true"]'))) return;
       if (event.key === 'ArrowRight' || event.code === 'Space') {
         event.preventDefault();
-        nextSlide();
+        setAutoPlay(false);
+        turnTo(Math.min(slides.length - 1, currentSlide + 1));
       } else if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        prevSlide();
+        setAutoPlay(false);
+        turnTo(Math.max(0, currentSlide - 1));
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [chatOpen]);
+  }, [chatOpen, currentSlide, turnTo]);
 
-  const openChat = () => setChatOpen(true);
+  const openChat = () => {
+    setAutoPlay(false);
+    setChatOpen(true);
+  };
 
   return (
-    <div className="deck-shell" id="top">
+    <div className="book-shell" id="top">
+      <div className="walnut-desk" aria-hidden="true"><div className="walnut-grain" /><div className="walnut-vignette" /></div>
       <a className="skip-link" href="#slide-content">Skip to briefing</a>
-      <header className="deck-header">
-        <a className="brand-lockup" href="#top" aria-label="VERTICE THERMAL home">
-          <span className="brand-name">VERTICE</span>
-          <span className="brand-divider" aria-hidden="true">/</span>
-          <span className="brand-label">HVAC Systems</span>
+      <header className="book-header">
+        <a className="book-brand" href="#top" aria-label="VERTICE THERMAL home">
+          <span className="book-brand-name brand-name">VERTICE</span>
+          <span className="book-brand-name">THERMAL</span>
+          <span className="book-brand-divider" aria-hidden="true">/</span>
+          <span className="book-brand-label">HVAC Systems</span>
         </a>
-        <div className="header-actions">
-          <span className="slide-count" aria-live="polite">0{currentSlide + 1} / 0{slides.length}</span>
-          <button className="header-cta" type="button" onClick={openChat}>Get in Touch</button>
+        <div className="book-header-actions">
+          <button className={`book-autoplay ${autoPlay ? 'active' : ''}`} type="button" onClick={() => setAutoPlay((playing) => !playing)} aria-pressed={autoPlay}>
+            <span aria-hidden="true">{autoPlay ? '●' : '○'}</span> {autoPlay ? 'Auto-Turning Active' : 'Paused'}
+          </button>
+          <span className="book-count" aria-live="polite">0{currentSlide + 1} / 0{slides.length}</span>
+          <button className="book-contact" type="button" onClick={openChat}>Get in Touch</button>
         </div>
       </header>
 
-      <main className="deck-main" id="slide-content" tabIndex={-1}>
-        <article className={`slide-card ${slide.type === 'cover' ? 'cover-slide' : `chapter-slide chapter-${slide.id}`}`} key={slide.id} aria-labelledby={`slide-title-${slide.id}`}>
-          {slide.id === 2 && (
-            <div className="emergency-photo" aria-hidden="true">
-              <img src="/night-hvac-repair.webp" alt="" />
-              <div className="emergency-shade" />
-            </div>
-          )}
-
-          {slide.type === 'cover' ? (
-            <div className="cover-copy slide-enter">
-              <span className="slide-badge">{slide.badge}</span>
-              <h1 id={`slide-title-${slide.id}`}>{slide.headline}</h1>
-              <p className="cover-subtext">{slide.subtext}</p>
-              <button className="cover-cta" type="button" onClick={nextSlide}>
-                <span>{slide.cta}</span>
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            </div>
-          ) : (
-            <div className={`chapter-layout slide-enter ${slide.id === 2 ? 'emergency-layout' : ''}`}>
-              <div className="chapter-copy">
-                <div className="chapter-kicker">
-                  <span>Chapter {slide.chapter}</span><i aria-hidden="true" /><span>HVAC Growth Framework</span>
+      <main
+        className="book-main"
+        id="slide-content"
+        tabIndex={-1}
+        onMouseEnter={() => setBookHovered(true)}
+        onMouseLeave={() => setBookHovered(false)}
+      >
+        <div className="book-stage">
+          <div className="book-shadow" aria-hidden="true" />
+          <article className={`physical-book ${slide.type === 'cover' ? 'book-cover-page' : 'book-chapter-page'}`} aria-labelledby={`slide-title-${slide.id}`}>
+            <div className="book-page-stack" aria-hidden="true" />
+            <div className="book-spine" aria-hidden="true" />
+            <div className={`book-page-content ${isTurning ? 'is-turning' : ''}`}>
+              <div className="book-page-glow" aria-hidden="true" />
+              {slide.type === 'cover' ? (
+                <div className="book-cover-copy">
+                  <span className="book-badge">{slide.badge}</span>
+                  <h1 id={`slide-title-${slide.id}`}>{slide.headline}</h1>
+                  <p>{slide.subtext}</p>
+                  <button className="book-start" type="button" onClick={() => { setAutoPlay(false); turnTo(1); }}>
+                    <span>{slide.cta}</span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>
                 </div>
-                <h1 id={`slide-title-${slide.id}`}>{slide.title}</h1>
-                <p className="chapter-body">{slide.body}</p>
-                {slide.cta && <button className="final-cta" type="button" onClick={openChat}>{slide.cta}</button>}
-              </div>
-              <div className="metric-card" aria-label={`${slide.metric}, ${slide.metricLabel}`}>
-                <strong>{slide.metric}</strong>
-                <span>{slide.metricLabel}</span>
-              </div>
+              ) : (
+                <div className="book-chapter-layout">
+                  <div className="book-chapter-copy">
+                    <div className="book-chapter-kicker">
+                      <span>Chapter {slide.chapter}</span><i aria-hidden="true" /><span>HVAC Growth Framework</span>
+                    </div>
+                    <h1 id={`slide-title-${slide.id}`}>{slide.title}</h1>
+                    <p>{slide.body}</p>
+                    {slide.cta && <button className="book-demo-cta" type="button" onClick={openChat}>{slide.cta}</button>}
+                  </div>
+                  <div className={`book-metric ${slide.id === 2 ? 'book-emergency-metric' : ''}`} aria-label={`${slide.metric}, ${slide.metricLabel}`}>
+                    {slide.id === 2 && <img className="book-emergency-photo" src="/night-hvac-repair.webp" alt="An HVAC technician responding to a late-night repair" />}
+                    <strong>{slide.metric}</strong>
+                    <span>{slide.metricLabel}</span>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </article>
+          </article>
+        </div>
       </main>
 
-      <footer className="deck-footer">
-        <div className="keyboard-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys to navigate</div>
-        <nav className="slide-progress" aria-label="Briefing slides">
+      <footer className="book-footer">
+        <div className="book-hint">{autoPlay && !bookHovered ? 'Hover book to pause page turns' : 'Page turning paused'}</div>
+        <nav className="book-progress" aria-label="Briefing pages">
           {slides.map((item, index) => (
             <button
               key={item.id}
               type="button"
-              className={`progress-dot ${currentSlide === index ? 'active' : ''}`}
-              onClick={() => setCurrentSlide(index)}
-              aria-label={`Go to slide ${index + 1}: ${item.title || 'Introduction'}`}
+              className={`book-dot ${currentSlide === index ? 'active' : ''}`}
+              onClick={() => { setAutoPlay(false); turnTo(index); }}
+              aria-label={`Go to page ${index + 1}: ${item.title || 'Introduction'}`}
               aria-current={currentSlide === index ? 'step' : undefined}
+              disabled={isTurning}
             />
           ))}
         </nav>
-        <div className="slide-controls">
-          <button type="button" className="slide-control previous" onClick={prevSlide} disabled={currentSlide === 0}>Prev</button>
-          <button type="button" className="slide-control next" onClick={nextSlide} disabled={currentSlide === slides.length - 1}>Next</button>
-        </div>
+        <div className="book-footer-brand">VERTICE</div>
       </footer>
 
       <button
