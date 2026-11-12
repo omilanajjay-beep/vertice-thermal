@@ -1,16 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-
-const HOTSPOTS = [
-  { id: 'compressor', label: 'Inverter compressor', note: 'Variable output', left: '12%', top: '62%', anchor: [-1.02, 0.16, 0.78], camera: [-3.0, 1.65, 5.5], target: [-0.82, 0.18, 0.12] },
-  { id: 'fan', label: 'AeroBlade fan', note: 'Low-noise airflow', left: '55%', top: '30%', anchor: [-0.15, 0.16, 1.02], camera: [0.65, 1.55, 4.35], target: [0.0, 0.18, 0.62] },
-  { id: 'exchanger', label: 'Copper core exchanger', note: 'Thermal exchange', left: '70%', top: '62%', anchor: [0.92, 0.1, 0.58], camera: [3.0, 1.55, 4.9], target: [0.92, 0.1, 0.48] },
-];
 
 function createSlateTexture() {
   const canvas = document.createElement('canvas');
@@ -120,21 +113,20 @@ export default function Hero3D({ onReady, finish = 'metal' } = {}) {
   const cameraRef = useRef(null);
   const targetRef = useRef(new THREE.Vector3(0, 0.2, 0.05));
   const cameraGoalRef = useRef(new THREE.Vector3(3.6, 2.55, 7.35));
-  const cameraTweenRef = useRef(null);
   const renderRef = useRef(() => {});
   const pointerRef = useRef(new THREE.Vector2());
-  const hotspotRefs = useRef({});
   const reducedMotionRef = useRef(false);
   const dragStateRef = useRef({ angle: 0, velocity: 0, active: false, lastX: 0 });
   const fanRef = useRef(null);
   const telemetryRef = useRef(null);
   const louverRefs = useRef([]);
   const ledRefs = useRef([]);
-  const [active, setActive] = useState('fan');
+  const streamlineRefs = useRef([]);
 
   useEffect(() => {
     if (!mountRef.current) return undefined;
     const mount = mountRef.current;
+    const thermalTrack = mount.closest('.thermal-track');
     const mobile = window.matchMedia('(max-width: 680px), (pointer: coarse)').matches;
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let reducedMotion = reducedMotionQuery.matches;
@@ -452,6 +444,36 @@ export default function Hero3D({ onReady, finish = 'metal' } = {}) {
     scene.add(telemetry);
     telemetryRef.current = telemetryMaterial;
 
+    // Fine aerodynamic ribbons make the air path legible without floating labels or dots.
+    const streamlineGroup = new THREE.Group();
+    streamlineGroup.renderOrder = 3;
+    const streamlineMaterial = new THREE.LineBasicMaterial({
+      color: finish === 'white' ? '#8eaa9f' : '#b9d6c4',
+      transparent: true,
+      opacity: mobile ? 0.22 : 0.34,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const streamlineCount = mobile ? 6 : 10;
+    streamlineRefs.current = Array.from({ length: streamlineCount }, (_, index) => {
+      const y = -0.7 + (index / Math.max(streamlineCount - 1, 1)) * 1.7;
+      const points = Array.from({ length: 28 }, (_, pointIndex) => {
+        const t = pointIndex / 27;
+        const x = -2.15 + t * 4.3;
+        const z = 1.03 + Math.sin(t * Math.PI * 1.5 + index * 0.7) * 0.11 + (index % 3) * 0.025;
+        return new THREE.Vector3(x, y + Math.sin(t * Math.PI * 2 + index) * 0.055, z);
+      });
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geometry, streamlineMaterial.clone());
+      line.userData.phase = index * 0.73;
+      line.userData.baseY = y;
+      line.userData.speed = 0.035 + (index % 3) * 0.009;
+      line.position.x = (index % 4) * 1.1 - 1.65;
+      streamlineGroup.add(line);
+      return line;
+    });
+    scene.add(streamlineGroup);
+
     // Restrained lime and warm status indicators show the unit is running.
     const ledMaterial = new THREE.MeshBasicMaterial({ color: '#d9e7cf' });
     ledRefs.current = [-0.95, -0.73, -0.51].map((x, index) => {
@@ -532,21 +554,28 @@ export default function Hero3D({ onReady, finish = 'metal' } = {}) {
     const clock = new THREE.Clock();
     const desiredCamera = new THREE.Vector3();
     const desiredLook = new THREE.Vector3();
-    const projectedHotspot = new THREE.Vector3();
     const orbitAxis = new THREE.Vector3(0, 1, 0);
+    const stageProgress = { value: 0 };
     const renderFrame = (now = performance.now()) => {
       if (disposed) return;
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
+      const requestedProgress = Number.parseFloat(thermalTrack?.dataset.motionProgress || '0');
+      const boundedProgress = Number.isFinite(requestedProgress) ? THREE.MathUtils.clamp(requestedProgress, 0, 1) : 0;
+      stageProgress.value = reducedMotion ? boundedProgress : THREE.MathUtils.damp(stageProgress.value, boundedProgress, 3.4, delta);
       const pointer = pointerRef.current;
-      const drift = reducedMotion ? 0 : Math.sin(elapsed * 0.34) * 0.035;
-      const idleOrbit = reducedMotion ? 0 : Math.sin(elapsed * 0.19) * 0.038;
+      const drift = reducedMotion ? 0 : Math.sin(elapsed * 0.34) * 0.055;
+      const idleOrbit = reducedMotion ? 0 : Math.sin(elapsed * 0.24) * 0.14;
       const drag = dragStateRef.current;
       if (!drag.active && !reducedMotion && Math.abs(drag.velocity) > 0.00001) {
         drag.angle += drag.velocity * delta * 60;
         drag.velocity *= Math.exp(-delta * 3.7);
       }
-      desiredCamera.copy(cameraGoalRef.current).sub(targetRef.current).applyAxisAngle(orbitAxis, drag.angle + idleOrbit).add(targetRef.current);
+      const scrollOrbit = stageProgress.value * 0.24;
+      desiredCamera.copy(cameraGoalRef.current).sub(targetRef.current).applyAxisAngle(orbitAxis, drag.angle + idleOrbit + scrollOrbit).add(targetRef.current);
+      desiredCamera.x += Math.sin(stageProgress.value * Math.PI) * 0.22;
+      desiredCamera.y += stageProgress.value * 0.22;
+      desiredCamera.z -= stageProgress.value * 0.3;
       desiredCamera.x += (reducedMotion || mobile ? 0 : pointer.x * 0.2) + drift;
       desiredCamera.y += (reducedMotion || mobile ? 0 : pointer.y * 0.11) + (reducedMotion ? 0 : Math.sin(elapsed * 0.47) * 0.018);
       desiredCamera.z += reducedMotion || mobile ? 0 : pointer.x * 0.045;
@@ -554,11 +583,19 @@ export default function Hero3D({ onReady, finish = 'metal' } = {}) {
       else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.2));
       if (!reducedMotion) {
         rotor.rotation.z += delta * ((mobile ? 2.2 : 2.65) + Math.min(Math.abs(drag.velocity) * 22, 4));
-        warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18;
+        warmFill.position.x = 3.1 + Math.sin(elapsed * 0.22) * 0.18 - stageProgress.value * 1.1;
+        coolRim.position.x = -4.1 + Math.sin(elapsed * 0.31 + 1.4) * 0.45 + stageProgress.value * 1.35;
+        coolRim.position.z = 2.2 + Math.cos(elapsed * 0.27) * 0.35;
         louverRefs.current.forEach((louver, index) => {
           louver.rotation.y = Math.sin(elapsed * 1.35 + index * 0.38) * 0.065 + drag.velocity * 1.4;
         });
         if (telemetryRef.current) telemetryRef.current.uniforms.uTime.value = elapsed;
+        streamlineRefs.current.forEach((line, index) => {
+          line.position.x += delta * line.userData.speed * 60 * (0.72 + stageProgress.value * 0.42);
+          if (line.position.x > 2.35) line.position.x -= 4.7;
+          line.position.y = Math.sin(elapsed * 0.55 + line.userData.phase) * 0.018;
+          line.material.opacity = (mobile ? 0.17 : 0.28) + Math.sin(elapsed * 0.9 + index) * 0.045;
+        });
       }
       ledRefs.current.forEach(({ led, glow }, index) => {
         const pulse = reducedMotion ? 1 : 0.78 + Math.sin(elapsed * 2.1 + index * 1.6) * 0.16;
@@ -571,18 +608,6 @@ export default function Hero3D({ onReady, finish = 'metal' } = {}) {
         targetRef.current.z,
       );
       camera.lookAt(desiredLook);
-      HOTSPOTS.forEach((hotspot) => {
-        const element = hotspotRefs.current[hotspot.id];
-        if (!element) return;
-        projectedHotspot.set(...hotspot.anchor).project(camera);
-        const visible = projectedHotspot.z > -1 && projectedHotspot.z < 1
-          && Math.abs(projectedHotspot.x) < 0.96 && Math.abs(projectedHotspot.y) < 0.94;
-        element.style.visibility = visible ? 'visible' : 'hidden';
-        if (visible) {
-          element.style.left = `${(projectedHotspot.x * 0.5 + 0.5) * 100}%`;
-          element.style.top = `${(-projectedHotspot.y * 0.5 + 0.5) * 100}%`;
-        }
-      });
       renderer.render(scene, camera);
       lastRender = now;
     };
@@ -626,8 +651,6 @@ export default function Hero3D({ onReady, finish = 'metal' } = {}) {
     const onReducedMotionChange = (event) => {
       reducedMotion = event.matches;
       reducedMotionRef.current = reducedMotion;
-      cameraTweenRef.current?.kill();
-      cameraTweenRef.current = null;
       if (reducedMotion) {
         camera.position.copy(cameraGoalRef.current);
         camera.lookAt(targetRef.current);
@@ -652,7 +675,6 @@ export default function Hero3D({ onReady, finish = 'metal' } = {}) {
       if (reducedMotionQuery.removeEventListener) reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
       else reducedMotionQuery.removeListener?.(onReducedMotionChange);
       visibilityObserver.disconnect();
-      cameraTweenRef.current?.kill();
       renderRef.current = () => {};
       scene.traverse((object) => {
         if (object.geometry) object.geometry.dispose();
@@ -673,45 +695,15 @@ export default function Hero3D({ onReady, finish = 'metal' } = {}) {
       renderer.domElement.remove();
       mount.replaceChildren();
       ledRefs.current = [];
-      hotspotRefs.current = {};
       fanRef.current = null;
       telemetryRef.current = null;
+      streamlineRefs.current = [];
       louverRefs.current = [];
     };
   }, []);
 
-  const focusHotspot = (hotspot) => {
-    const camera = cameraRef.current;
-    if (!camera) return;
-    setActive(hotspot.id);
-    cameraTweenRef.current?.kill();
-    if (reducedMotionRef.current) {
-      cameraGoalRef.current.set(...hotspot.camera);
-      targetRef.current.set(...hotspot.target);
-      camera.position.copy(cameraGoalRef.current);
-      camera.lookAt(targetRef.current);
-      renderRef.current();
-      return;
-    }
-    cameraTweenRef.current = gsap.timeline({ defaults: { duration: 1.35, ease: 'power3.inOut' } })
-      .to(cameraGoalRef.current, { x: hotspot.camera[0], y: hotspot.camera[1], z: hotspot.camera[2] }, 0)
-      .to(targetRef.current, { x: hotspot.target[0], y: hotspot.target[1], z: hotspot.target[2] }, 0);
-  };
-
   return <div className="scene-wrap">
     <div className="scene-canvas" ref={mountRef} />
     <div className="scene-vignette" aria-hidden="true" />
-    <div className="scene-hotspots" aria-label="Explore equipment components">
-      {HOTSPOTS.map((hotspot) => <button
-        key={hotspot.id}
-        className={`hotspot ${active === hotspot.id ? 'active' : ''}`}
-        style={{ left: hotspot.left, top: hotspot.top }}
-        ref={(element) => { hotspotRefs.current[hotspot.id] = element; }}
-        onClick={() => focusHotspot(hotspot)}
-        aria-pressed={active === hotspot.id}
-        aria-label={`Focus on ${hotspot.label}`}
-      ><span className="hotspot-marker" /><span className="hotspot-copy"><b>{hotspot.label}</b><small>{hotspot.note}</small></span></button>)}
-    </div>
-    <div className="scene-scale" aria-hidden="true"><span>ARCHITECTURAL STUDY</span><span>DRAG-FREE / SELECT A COMPONENT</span></div>
   </div>;
 }

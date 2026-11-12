@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import Hero3D from './Hero3D';
 import { ChatPanel } from './HvacSlideDeck';
 import ThermalPeel from './ThermalPeel';
+import ClimateMotion from './ClimateMotion';
 
 function TapeLetters({ text }: { text: string }) {
   return <span className="tape-letter-row" aria-label={text}>{Array.from(text).map((letter, index) => (
@@ -44,6 +45,10 @@ export default function VerticeLanding() {
   useEffect(() => {
     let disposed = false;
     let progress = 0;
+    let targetProgress = 0;
+    let lastTime = 0;
+    let comfortVisible = false;
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let worker: Worker | undefined;
     let workerUrl: string | undefined;
     const canvas = thermalRef.current;
@@ -77,14 +82,21 @@ export default function VerticeLanding() {
       worker = undefined;
     }
 
-    const updateStage = () => {
+    const updateStage = (now: number) => {
       animationFrame.current = 0;
       const track = trackRef.current;
       if (!track) return;
       const rect = track.getBoundingClientRect();
       const travel = Math.max(1, track.offsetHeight - window.innerHeight);
-      const next = Math.min(1, Math.max(0, -rect.top / travel));
-      progress = next;
+      targetProgress = Math.min(1, Math.max(0, -rect.top / travel));
+      const delta = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 1 / 60;
+      lastTime = now;
+      const next = motionQuery.matches ? targetProgress : progress + (targetProgress - progress) * (1 - Math.exp(-delta * 13));
+      const settled = Math.abs(next - targetProgress) < 0.00015;
+      progress = settled ? targetProgress : next;
+      track.dataset.motionProgress = progress.toFixed(5);
+      track.style.setProperty('--thermal-progress', String(progress));
+      track.style.setProperty('--thermal-arc', `${progress * 28}deg`);
       const sheet = sheetRef.current;
       if (sheet) {
         const x = -7 * next;
@@ -100,21 +112,27 @@ export default function VerticeLanding() {
       }
       if (unitRef.current) {
         const unitProgress = Math.min(1, Math.max(0, (next - 0.24) / 0.66));
+        const easedUnit = 1 - Math.pow(1 - unitProgress, 3);
         unitRef.current.style.opacity = String(unitProgress);
-        unitRef.current.style.transform = `translate3d(${(1 - unitProgress) * 72}px, ${(1 - unitProgress) * 28}px, 0) scale(${0.82 + unitProgress * 0.18})`;
+        unitRef.current.style.transform = motionQuery.matches ? 'none' : `perspective(1100px) translate3d(${(1 - easedUnit) * 110}px, ${(1 - easedUnit) * 52}px, 0) rotateY(${(1 - easedUnit) * -22}deg) rotateZ(${(1 - easedUnit) * 5}deg) scale(${0.76 + easedUnit * 0.24})`;
       }
       if (worker && Math.abs(next - Number(track.dataset.workerProgress || '-2')) > 0.008) {
         track.dataset.workerProgress = String(next);
         worker.postMessage({ progress: next });
       }
       track.dataset.revealed = next > 0.18 ? 'true' : 'false';
-      setShowComfortUnit(next > 0.18 && rect.bottom > 0);
+      const shouldShowComfort = next > 0.18 && rect.bottom > 0;
+      if (comfortVisible !== shouldShowComfort) {
+        comfortVisible = shouldShowComfort;
+        setShowComfortUnit(shouldShowComfort);
+      }
       const underlay = track.querySelector('.thermal-underlay');
       if (underlay instanceof HTMLElement) {
         const hidden = next <= 0.18;
         underlay.inert = hidden;
         underlay.setAttribute('aria-hidden', String(hidden));
       }
+      if (!settled && !disposed) animationFrame.current = window.requestAnimationFrame(updateStage);
     };
     const requestStageUpdate = () => {
       if (!animationFrame.current) animationFrame.current = window.requestAnimationFrame(updateStage);
@@ -275,6 +293,7 @@ export default function VerticeLanding() {
 
   return (
     <div className="vertice-site" id="top" style={unitStyle}>
+      <ClimateMotion ready={!loading} />
       {loading && (
           <div className={`thermal-preloader ${loadPercent === 100 ? 'is-complete' : ''}`} role="status" aria-live="polite" aria-label={`Loading VERTICE THERMAL, ${loadPercent} percent`}>
           <div className="loader-brand">VERTICE <span>THERMAL</span></div>

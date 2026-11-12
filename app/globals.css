@@ -905,3 +905,41 @@ body { overflow: visible; }
   .underlay-unit { right: -8vw; bottom: 1%; }
 }
 @keyframes hero-arrive-mobile { from { transform: translateY(18px); opacity:0; } to { transform: none; opacity:1; } }
+
+/* Cinematic climate choreography: same composition, richer dimensional movement. */
+.vertice-site .hero-copy { perspective: 1100px; }
+.vertice-site .hero-copy > * { transform-origin: 0 60%; }
+.thermal-pin { perspective: 1800px; }
+.thermal-underlay { perspective: 1200px; }
+.underlay-orbit { border-style: dashed; border-color: rgba(17,19,15,.18); }
+.orbit-b { border-style: solid; border-color: rgba(17,19,15,.1); }
+.thermal-underlay::after { position: absolute; inset: -40%; background: conic-gradient(from 30deg at 65% 50%, transparent 0deg, rgba(255,255,245,.15) 28deg, transparent 67deg, transparent 210deg, rgba(255,255,245,.09) 244deg, transparent 285deg); content: ''; transform: rotate(var(--thermal-arc,0deg)); pointer-events: none; }
+.model-bay-glow { animation: climate-light-breathe 9s ease-in-out infinite alternate; }
+@keyframes climate-light-breathe { from { opacity: .45; transform: translate3d(-12px,0,0) scale(.88); } to { opacity: .9; transform: translate3d(15px,-12px,0) scale(1.1); } }
+.sheet-scroll-cue i { animation: climate-scroll-nudge 2.4s ease-in-out infinite; }
+@keyframes climate-scroll-nudge { 0%,100% { transform: translateY(0); opacity:.6; } 50% { transform: translateY(5px); opacity:1; } }
+.approach-grid, .services-heading, .contact-section { perspective: 1200px; }
+.service-cards { perspective: 1200px; }
+.service-card { transform: rotateX(var(--card-rx,0deg)) rotateY(var(--card-ry,0deg)); transform-style: preserve-3d; transition: transform .55s cubic-bezier(.16,.8,.24,1), background .4s ease, box-shadow .4s ease; }
+.service-card::before { position:absolute; inset:0; content:''; opacity:0; background:radial-gradient(ellipse at var(--card-light-x,50%) var(--card-light-y,50%),rgba(255,255,255,.9),rgba(201,243,72,.06) 60%,transparent 90%); transition:opacity .5s ease; pointer-events:none; }
+.service-card > * { position:relative; }
+.service-card .service-icon { position:absolute; transform: translateZ(22px); transition: transform .7s cubic-bezier(.16,.8,.24,1); }
+.service-card h3 { transform:translateZ(14px); }
+.service-card p, .service-card .service-tag { transform:translateZ(8px); }
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  .service-card:hover { box-shadow: 0 22px 36px -26px rgba(17,19,15,.28); }
+  .service-card:hover::before { opacity:1; }
+  .service-card:hover .service-icon { transform:translateZ(28px) rotate(12deg); }
+  .text-link span, .sheet-contact span, .contact-primary span { display:inline-block; transition: transform .4s cubic-bezier(.16,.8,.24,1); }
+  .text-link:hover span, .sheet-contact:hover span, .contact-primary:hover span { transform:translate(3px,-3px); }
+}
+@media (max-width:680px) {
+  .thermal-pin { perspective:1200px; }
+  .service-card { transform:none; transform-style:flat; }
+  .service-card h3, .service-card p, .service-card .service-tag { transform:none; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .service-card, .service-card h3, .service-card p, .service-card .service-tag, .service-card .service-icon { transform:none !important; }
+  .model-bay-glow, .sheet-scroll-cue i { animation:none !important; }
+  .thermal-underlay::after { transform:none; }
+}
