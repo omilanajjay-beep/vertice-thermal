@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Pause, Play, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
 import './flip-chapter.css';
 
 type FlipSlide = {
@@ -36,7 +36,6 @@ export default function FlipChapter({
   blocked = false,
 }: FlipChapterProps) {
   const [current, setCurrent] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [isDocumentVisible, setIsDocumentVisible] = useState(true);
   const [isInteracting, setIsInteracting] = useState(false);
@@ -59,8 +58,7 @@ export default function FlipChapter({
   const navigate = useCallback((nextIndex: number) => {
     if (!slideCount) return;
     setCurrent((nextIndex + slideCount) % slideCount);
-    clearTimer();
-  }, [clearTimer, slideCount]);
+  }, [slideCount]);
 
   const next = useCallback(() => navigate(current + 1), [current, navigate]);
   const previous = useCallback(() => navigate(current - 1), [current, navigate]);
@@ -92,13 +90,13 @@ export default function FlipChapter({
 
   useEffect(() => {
     clearTimer();
-    const shouldAutoplay = canNavigate && isPlaying && isVisible && isDocumentVisible && !isInteracting && !blocked && !reducedMotion;
+    const shouldAutoplay = canNavigate && isVisible && isDocumentVisible && !isInteracting && !blocked && !reducedMotion;
     if (!shouldAutoplay) return;
     timerRef.current = window.setTimeout(() => {
       setCurrent((value) => (value + 1) % slideCount);
     }, AUTOPLAY_MS);
     return clearTimer;
-  }, [blocked, canNavigate, clearTimer, current, isDocumentVisible, isInteracting, isPlaying, isVisible, reducedMotion, slideCount]);
+  }, [blocked, canNavigate, clearTimer, current, isDocumentVisible, isInteracting, isVisible, reducedMotion, slideCount]);
 
   useEffect(() => clearTimer, [clearTimer]);
 
@@ -172,9 +170,6 @@ export default function FlipChapter({
             <div className="flip-chapter__buttons">
               <button type="button" onClick={previous} disabled={!canNavigate} aria-label="Previous slide"><ArrowLeft size={16} aria-hidden="true" /></button>
               <button type="button" onClick={next} disabled={!canNavigate} aria-label="Next slide"><ArrowRight size={16} aria-hidden="true" /></button>
-              <button type="button" disabled={reducedMotion} onClick={() => { setIsPlaying((value) => !value); clearTimer(); }} aria-label={reducedMotion ? 'Automatic rotation disabled for reduced motion' : isPlaying ? 'Pause automatic slide rotation' : 'Play automatic slide rotation'} aria-pressed={!isPlaying}>
-                {isPlaying && !reducedMotion ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" />}
-              </button>
             </div>
           </div>
         </div>

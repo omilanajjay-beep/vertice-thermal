@@ -197,8 +197,7 @@
 .climate-scroll svg { color: var(--climate-green); animation: climate-scroll-cue 2s ease-in-out infinite; }
 @keyframes climate-scroll-cue { 50% { transform: translateY(4px); } }
 .climate-autoflip { position: absolute; z-index: 7; left: 6vw; top: 115px; width: 136px; }
-.climate-autoflip > button { display: inline-flex; align-items: center; gap: 9px; padding: 9px 0; border: 0; background: transparent; color: #edf8f0; font: 6px var(--mono); letter-spacing: .12em; }
-.climate-autoflip > button svg { color: var(--climate-green); }
+.climate-autoflip-label { display: inline-flex; align-items: center; padding: 9px 0; color: #edf8f0; font: 6px var(--mono); letter-spacing: .12em; }
 .climate-auto-track { display: block; height: 1px; margin-top: 5px; background: #ffffff30; overflow: hidden; }
 .climate-auto-track i { display: block; height: 100%; width: 0; background: var(--climate-green); }
 .climate-auto-track i.is-playing { animation: climate-auto-progress 8s linear forwards; }
@@ -213,7 +212,7 @@
 .climate-site-footer > small { grid-column: 1/-1; color: #7f9387; font-size: 9px; line-height: 1.7; }
 @media (max-width: 700px) {
   .climate-autoflip { top: 92px; width: 120px; }
-  .climate-autoflip > button { font-size: 5px; }
+  .climate-autoflip-label { font-size: 5px; }
   .climate-footer-tag { display: none; }
   .climate-scroll { font-size: 5px; gap: 6px; letter-spacing: .04em; }
   .climate-footer { right: 84px; }

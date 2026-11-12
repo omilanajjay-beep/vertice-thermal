@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Snowflake, Flame, Wind, X, Pause, Play } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Snowflake, Flame, Wind, X } from 'lucide-react';
 import { gsap } from 'gsap';
 import FlipChapter from './FlipChapter';
 import './climate.css';
@@ -90,7 +90,6 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
   const [progress, setProgress] = useState(0);
   const [traveling, setTraveling] = useState(false);
   const [guide, setGuide] = useState(false);
-  const [autoPaused, setAutoPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);
   const [heroVisible, setHeroVisible] = useState(true);
   const [pageVisible, setPageVisible] = useState(true);
@@ -105,6 +104,7 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
   const introBrand = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const lock = useRef(false);
+  const firstAutoFlipAt = useRef<number | null>(null);
   const travelTimeline = useRef<gsap.core.Timeline | null>(null);
   const guideClose = useRef<HTMLButtonElement>(null);
   const guideTrigger = useRef<HTMLButtonElement>(null);
@@ -113,6 +113,7 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
   const NextIcon = worlds[next].icon;
 
   useEffect(() => {
+    firstAutoFlipAt.current = performance.now() + 8000;
     worlds.forEach(({ image }) => { const photo = new Image(); photo.src = image; });
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setLoading(false); setProgress(100); return;
@@ -175,12 +176,22 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
     return () => { observer.disconnect(); media.removeEventListener('change', syncMotion); document.removeEventListener('visibilitychange', syncVisibility); };
   }, []);
 
-  const autoPlaying = !autoPaused && !interacting && !reducedMotion && heroVisible && pageVisible && !loading && !traveling && !guide && !chatOpen;
+  const autoClockActive = !interacting && !reducedMotion && heroVisible && pageVisible && !traveling && !guide && !chatOpen;
+  const autoPlaying = autoClockActive && !loading;
   useEffect(() => {
-    if (!autoPlaying) return;
-    const timer = window.setTimeout(() => go((current + 1) % worlds.length), 8000);
+    if (!autoPlaying) {
+      if (!loading) firstAutoFlipAt.current = null;
+      return;
+    }
+    const delay = firstAutoFlipAt.current === null
+      ? 8000
+      : Math.max(0, firstAutoFlipAt.current - performance.now());
+    const timer = window.setTimeout(() => {
+      firstAutoFlipAt.current = null;
+      go((current + 1) % worlds.length);
+    }, delay);
     return () => window.clearTimeout(timer);
-  }, [autoPlaying, current, go]);
+  }, [autoPlaying, current, go, loading]);
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
@@ -271,11 +282,9 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
       <div className="climate-controls"><span>0{current + 1}<small> / 03</small></span><button onClick={() => go((current + 2) % 3)} disabled={traveling || loading} aria-label="Previous climate"><ArrowLeft size={17} /></button><button onClick={() => go(next)} disabled={traveling || loading} aria-label="Next climate"><ArrowRight size={17} /></button></div>
     </footer>
 
-    <div className="climate-autoflip">
-      <button onClick={() => setAutoPaused((paused) => !paused)} disabled={reducedMotion} aria-label={autoPaused ? 'Resume automatic climate flips' : 'Pause automatic climate flips'} aria-pressed={autoPaused}>
-        {autoPaused || reducedMotion ? <Play size={11} /> : <Pause size={11} />}<span>{reducedMotion ? 'MANUAL EXPLORATION' : autoPaused ? 'AUTO FLIP PAUSED' : 'AUTO FLIP / 8 SEC'}</span>
-      </button>
-      <span className="climate-auto-track" aria-hidden="true"><i key={`${current}-${autoPlaying}`} className={autoPlaying ? 'is-playing' : ''} /></span>
+    <div className="climate-autoflip" aria-label="Automatic climate rotation">
+      <span className="climate-autoflip-label">{reducedMotion ? 'MANUAL EXPLORATION' : 'AUTO FLIP / 8 SEC'}</span>
+      <span className="climate-auto-track" aria-hidden="true"><i key={`${current}-${autoClockActive}`} className={autoClockActive ? 'is-playing' : ''} /></span>
     </div>
 
     <div ref={flight} className="climate-flight" aria-hidden="true"><img ref={flightImage} alt="" /></div>
