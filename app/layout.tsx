@@ -2,17 +2,17 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'VERTEX — HVAC Response Systems',
-  description: 'A crisp top-down studio field note about the calls local HVAC companies miss after hours.',
-  applicationName: 'VERTEX',
+  title: 'VERTICE THERMAL — HVAC Response Systems',
+  description: 'A field briefing for local HVAC owners on after-hours calls, lead response, and recovered revenue.',
+  applicationName: 'VERTICE THERMAL',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://vertice-thermal.onrender.com'),
   alternates: { canonical: '/' },
   icons: { icon: '/favicon.svg' },
   openGraph: {
-    title: 'VERTEX — HVAC Response Systems',
-    description: 'A top-down interactive HVAC field note.',
+    title: 'VERTICE THERMAL — HVAC Response Systems',
+    description: 'An exclusive breakdown for US HVAC owners.',
     type: 'website',
-    siteName: 'VERTEX',
+    siteName: 'VERTICE THERMAL',
   },
   robots: { index: true, follow: true },
 };

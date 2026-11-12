@@ -1,5 +1,5 @@
-import LamplitBook from './components/LamplitBook';
+import HvacSlideDeck from './components/HvacSlideDeck';
 
 export default function Home() {
-  return <LamplitBook />;
+  return <HvacSlideDeck />;
 }

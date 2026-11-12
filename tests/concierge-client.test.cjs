@@ -6,19 +6,20 @@ const Module = require('node:module');
 const ts = require('typescript');
 
 const appPage = path.resolve(__dirname, '../app/page.tsx');
-const experienceFile = path.resolve(__dirname, '../app/components/LamplitBook.tsx');
+const experienceFile = path.resolve(__dirname, '../app/components/HvacSlideDeck.tsx');
 const cssFile = path.resolve(__dirname, '../app/globals.css');
+const layoutFile = path.resolve(__dirname, '../app/layout.tsx');
 const readExperience = () => fs.readFileSync(experienceFile, 'utf8');
 const readCss = () => fs.readFileSync(cssFile, 'utf8');
 
-test('homepage renders the flatlay book experience as the entire page', () => {
+test('homepage renders the HVAC slide deck as the complete experience', () => {
   const jsx = (type, props) => ({ type, props: props || {} });
-  const flatlayBook = Symbol('LamplitBook');
+  const slideDeck = Symbol('HvacSlideDeck');
   const code = ts.transpileModule(fs.readFileSync(appPage, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX }, fileName: appPage }).outputText;
   const original = Module._load;
   Module._load = function (request, parent, main) {
     if (request === 'react/jsx-runtime') return { jsx, jsxs: jsx, Fragment: 'fragment' };
-    if (request === './components/LamplitBook') return { __esModule: true, default: flatlayBook };
+    if (request === './components/HvacSlideDeck') return { __esModule: true, default: slideDeck };
     return original.call(this, request, parent, main);
   };
   let tree;
@@ -29,40 +30,65 @@ test('homepage renders the flatlay book experience as the entire page', () => {
     mod._compile(code, appPage);
     tree = mod.exports.default();
   } finally { Module._load = original; }
-  assert.equal(tree.type, flatlayBook);
+  assert.equal(tree.type, slideDeck);
 });
 
-test('the scene is a top-down desk flatlay with the requested props and lighting', () => {
+test('the supplied five-part HVAC story and metrics are present', () => {
   const source = readExperience();
-  for (const feature of ['PerspectiveCamera', "camera.position.set(0, 13, 5)", 'woodTexture', 'succulent', 'pencil', 'saucer', 'latte', 'SpotLight', 'PCFSoftShadowMap']) assert.ok(source.includes(feature), `Expected ${feature}`);
-  assert.match(source, /#111111/);
-  assert.match(source, /#FFD28B/);
+  for (const feature of [
+    'The After-Hours Leak: How Local HVAC Companies Lose $5,000+ Every Month',
+    'The 11:00 PM Emergency', 'The Direct Loss', 'The 24/7 AI Receptionist', 'Revenue Recovery',
+    '11:00 PM', '100%', '+$5,400', 'Instant',
+    'Claim Your Custom 30-Minute Pipeline Demo For Your HVAC Business',
+  ]) assert.ok(source.includes(feature), `Expected ${feature}`);
+  assert.match(source, /const slides: Slide\[\] = \[/);
 });
 
-test('page artwork is high-resolution canvas texturing with anisotropy 16', () => {
+test('VERTICE remains the selected brand in the page and metadata', () => {
   const source = readExperience();
-  for (const feature of ['PAGE_WIDTH = 2048', 'PAGE_HEIGHT = 1280', 'CanvasTexture', 'anisotropy', 'getMaxAnisotropy', 'Contents', 'The 11:00 PM Emergency', 'Every missed call']) assert.ok(source.includes(feature), `Expected ${feature}`);
-  assert.match(source, /Math\.min\(16/);
+  const metadata = fs.readFileSync(layoutFile, 'utf8');
+  assert.match(source, /brand-name">VERTICE</);
+  assert.match(source, /VERTICE \/ LIVE INTAKE/);
+  assert.doesNotMatch(source, /VERTEX/);
+  assert.match(metadata, /VERTICE THERMAL/);
+  assert.doesNotMatch(metadata, /VERTEX/);
 });
 
-test('page turns are real 3D spine pivots triggered by clicks and arrow keys', () => {
+test('the header, final demo CTA, and floating chat launcher share the chat flow', () => {
   const source = readExperience();
-  for (const feature of ['Raycaster', 'leftPivot', 'rightPivot', 'rotation.z', 'uCurl', 'pointerup', 'ArrowRight', 'ArrowLeft']) assert.ok(source.includes(feature), `Expected ${feature}`);
-  assert.match(source, /underLeft\.visible = true/);
-  assert.match(source, /underRight\.visible = true/);
-});
-
-test('sharp fixed CSS contains no blur or backdrop-filter effects', () => {
-  const css = readCss();
-  assert.match(css, /overflow:\s*hidden/);
-  assert.doesNotMatch(css, /blur\s*\(/i);
-  assert.doesNotMatch(css, /backdrop-filter/i);
-  assert.doesNotMatch(css, /filter\s*:/i);
-});
-
-test('the crisp VERTEX overlay preserves the secure contact flow', () => {
-  const source = readExperience();
-  assert.match(source, />VERTEX</);
   assert.match(source, /Get in Touch/);
+  assert.match(source, /Claim Your Custom 30-Minute Pipeline Demo For Your HVAC Business/);
+  assert.match(source, /Chat with Elena/);
+  assert.match(source, /aria-expanded=\{chatOpen\}/);
+  assert.match(source, /role="dialog"/);
+  assert.match(source, /Skip to briefing/);
+});
+
+test('chat keeps the required intake order and only advances after accepted replies', () => {
+  const source = readExperience();
+  assert.match(source, /\['name', 'phone', 'email', 'address', 'problem'\]/);
   assert.match(source, /fetch\('\/api\/concierge'/);
+  assert.match(source, /if \(!data\.accepted\) return/);
+  assert.match(source, /if \(data\.complete\)/);
+  assert.match(source, /knownName: answers\.name/);
+});
+
+test('availability and booking use only the existing Cal.com API routes', () => {
+  const source = readExperience();
+  assert.match(source, /fetch\(`\/api\/slots\?/);
+  assert.match(source, /fetch\('\/api\/book'/);
+  assert.match(source, /Confirm appointment/);
+  assert.match(source, /Cal\.com will handle your appointment confirmation email/);
+  assert.doesNotMatch(source, /make\.com|pipedream|sendgrid/i);
+});
+
+test('emergency photo, keyboard controls, responsive layout, and reduced-motion support are present', () => {
+  const source = readExperience();
+  const css = readCss();
+  assert.match(source, /night-hvac-repair\.webp/);
+  assert.match(source, /ArrowRight/);
+  assert.match(source, /ArrowLeft/);
+  assert.match(css, /@media \(max-width: 760px\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(css, /overflow: auto/);
 });
