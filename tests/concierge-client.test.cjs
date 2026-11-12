@@ -7,19 +7,18 @@ const ts = require('typescript');
 
 const appPage = path.resolve(__dirname, '../app/page.tsx');
 const experienceFile = path.resolve(__dirname, '../app/components/LamplitBook.tsx');
+const cssFile = path.resolve(__dirname, '../app/globals.css');
 const readExperience = () => fs.readFileSync(experienceFile, 'utf8');
+const readCss = () => fs.readFileSync(cssFile, 'utf8');
 
-test('homepage renders the Lamplit HVAC book as the entire page', () => {
+test('homepage renders the flatlay book experience as the entire page', () => {
   const jsx = (type, props) => ({ type, props: props || {} });
-  const lamplitBook = Symbol('LamplitBook');
-  const code = ts.transpileModule(fs.readFileSync(appPage, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-    fileName: appPage,
-  }).outputText;
+  const flatlayBook = Symbol('LamplitBook');
+  const code = ts.transpileModule(fs.readFileSync(appPage, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX }, fileName: appPage }).outputText;
   const original = Module._load;
   Module._load = function (request, parent, main) {
     if (request === 'react/jsx-runtime') return { jsx, jsxs: jsx, Fragment: 'fragment' };
-    if (request === './components/LamplitBook') return { __esModule: true, default: lamplitBook };
+    if (request === './components/LamplitBook') return { __esModule: true, default: flatlayBook };
     return original.call(this, request, parent, main);
   };
   let tree;
@@ -30,48 +29,40 @@ test('homepage renders the Lamplit HVAC book as the entire page', () => {
     mod._compile(code, appPage);
     tree = mod.exports.default();
   } finally { Module._load = original; }
-  assert.equal(tree.type, lamplitBook);
+  assert.equal(tree.type, flatlayBook);
 });
 
-test('the experience includes the dark desk, book, lamp, and 3D scene primitives', () => {
+test('the scene is a top-down desk flatlay with the requested props and lighting', () => {
   const source = readExperience();
-  for (const feature of ['createDeskScene', 'new THREE.WebGLRenderer', 'pageCurlMaterial', 'lampLight', 'new THREE.Mesh', 'pointer']) {
-    assert.ok(source.includes(feature), `Expected the experience to include ${feature}`);
-  }
-  assert.match(source, /black hardcover|coverMaterial|paperMaterial/i);
-  assert.match(source, /pointermove/);
+  for (const feature of ['PerspectiveCamera', "camera.position.set(0, 13, 5)", 'woodTexture', 'succulent', 'pencil', 'saucer', 'latte', 'SpotLight', 'PCFSoftShadowMap']) assert.ok(source.includes(feature), `Expected ${feature}`);
+  assert.match(source, /#111111/);
+  assert.match(source, /#FFD28B/);
 });
 
-test('the four HVAC story pages preserve the requested narrative captions', () => {
+test('page artwork is high-resolution canvas texturing with anisotropy 16', () => {
   const source = readExperience();
-  for (const phrase of [
-    'The 11:00 PM Emergency',
-    'The Direct Loss',
-    'The 24/7 AI Receptionist',
-    '$5,400',
-    'Claim Your Custom 30-Minute Pipeline Demo For Your HVAC Business',
-  ]) assert.ok(source.includes(phrase), `Expected the story to include ${phrase}`);
-  assert.match(source, /PhoneVisual/);
-  assert.match(source, /CompetitorVisual/);
-  assert.match(source, /PipelineVisual/);
-  assert.match(source, /MetricsVisual/);
+  for (const feature of ['PAGE_WIDTH = 2048', 'PAGE_HEIGHT = 1280', 'CanvasTexture', 'anisotropy', 'getMaxAnisotropy', 'Contents', 'The 11:00 PM Emergency', 'Every missed call']) assert.ok(source.includes(feature), `Expected ${feature}`);
+  assert.match(source, /Math\.min\(16/);
 });
 
-test('the book supports cover opening, clicks, dragging, and arrow-key navigation', () => {
+test('page turns are real 3D spine pivots triggered by clicks and arrow keys', () => {
   const source = readExperience();
-  assert.match(source, /const openBook/);
-  assert.match(source, /onPointerDown/);
-  assert.match(source, /onPointerUp/);
-  assert.match(source, /ArrowRight/);
-  assert.match(source, /ArrowLeft/);
-  assert.match(source, /setTurning/);
+  for (const feature of ['Raycaster', 'leftPivot', 'rightPivot', 'rotation.z', 'uCurl', 'pointerup', 'ArrowRight', 'ArrowLeft']) assert.ok(source.includes(feature), `Expected ${feature}`);
+  assert.match(source, /underLeft\.visible = true/);
+  assert.match(source, /underRight\.visible = true/);
 });
 
-test('the Elena chat dock submits to the secure concierge endpoint', () => {
+test('sharp fixed CSS contains no blur or backdrop-filter effects', () => {
+  const css = readCss();
+  assert.match(css, /overflow:\s*hidden/);
+  assert.doesNotMatch(css, /blur\s*\(/i);
+  assert.doesNotMatch(css, /backdrop-filter/i);
+  assert.doesNotMatch(css, /filter\s*:/i);
+});
+
+test('the crisp VERTEX overlay preserves the secure contact flow', () => {
   const source = readExperience();
-  assert.match(source, /Elena/);
-  assert.match(source, /AI RECEPTIONIST/);
+  assert.match(source, />VERTEX</);
+  assert.match(source, /Get in Touch/);
   assert.match(source, /fetch\('\/api\/concierge'/);
-  assert.match(source, /completedFields/);
-  assert.match(source, /setChatOpen/);
 });

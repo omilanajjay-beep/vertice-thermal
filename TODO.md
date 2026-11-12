@@ -1,31 +1,27 @@
-# VERTICE THERMAL — delivery outcomes
+# VERTEX — flatlay delivery outcomes
 
-## 1. Lamplit black-desk visual direction
+## Fixed viewport and sharp studio presentation
 
-- Use pure black `#000000`, dark slate `#111111`, off-white/paper `#F3F2EE`, and clean white `#FFFFFF` as the primary palette.
-- Use a clean Inter / Google Sans-style sans-serif system with mono field labels for technical annotations.
-- Present a moody, high-end dark desk setup with a realistic black hardcover book lying flat on a lacquered black oak desk, illuminated by a warm pool of lamplight.
-- Include nearby desktop details such as a cappuccino cup, pencil, business card, and succulent model.
+- Delete the vertical scrolling layout and use `overflow: hidden` with a full-viewport `h-screen w-screen` composition.
+- Remove all CSS `blur()` and `backdrop-filter` effects; every surface, control, page, and texture must remain razor-sharp and crisp.
+- Position a Three.js PerspectiveCamera steeply downward around 65–75 degrees over a dark textured black oak desk surface `#111111`.
+- Keep the composition top-down and flatlay-focused rather than presenting a scrolling landing page.
 
-## 2. Interactive 3D book navigation
+## Desk props and lighting
 
-- Use React, Vite/Next-compatible TypeScript, Three.js, WebGL, and Tailwind-compatible styling already present in the project.
-- Clicking the front cover must trigger a smooth cinematic push-in and open the field note.
-- Support page-turning by clicking either half of the open book or dragging its edges, with a paper-curl shader treatment.
-- Support arrow-key navigation.
-- Gently lean the scene toward the cursor.
-- When the book opens, the introductory headlines must step aside rather than obscure the book.
+- Place a small geometric potted succulent and a dark wooden pencil angled slightly toward the book at far left.
+- Place a white ceramic cappuccino cup with latte art on a white saucer at far right, partially cropped at the right edge.
+- Use a warm overhead spotlight/lamplight that casts a clean pool of light onto the open book with realistic soft shadows around the cup, succulent, and book edges.
 
-## 3. HVAC story pages
+## Open book and high-resolution page content
 
-- Cover page must use: “The After-Hours Leak: How Local HVAC Companies Lose $5,000+ Every Month (And How to Fix It in 30 Minutes).”
-- Page 1 must show an HVAC contractor’s phone ringing at 11:00 PM to an empty voicemail, with the caption: “The 11:00 PM Emergency: A homeowner's AC breaks down, they call your number, but it rings out to voicemail.”
-- Page 2 must show a frustrated homeowner hanging up and dialing a local competitor who answers instantly, with the caption: “The Direct Loss: Because nobody picked up, a $450 repair and a lifelong customer just walked straight to your competitor.”
-- Page 3 must show an automated receptionist pipeline capturing the lead, texting back, and locking in bookings automatically, with the caption: “The 24/7 AI Receptionist: While you sleep, our automated pipeline engages the lead instantly, qualifies them, and books the job directly onto your calendar.”
-- Page 4 must show recovered revenue of `$5,400+` and the CTA: “Claim Your Custom 30-Minute Pipeline Demo For Your HVAC Business.”
+- Keep a wide horizontal hardcover book lying flat in the center, open to a two-page spread with 16:10 page proportions.
+- Render page contents onto high-resolution HTML5 Canvas textures at `2048x1280`, with anisotropy `16`, so typography and graphics stay readable and sharp on the 3D pages.
+- Make the left page off-white `#F3F2EE` with a “Contents” header and a clean two-column list: “01. The 11:00 PM Emergency”, “02. The Competitor Loss”, “03. 24/7 AI Receptionist”, and “04. Revenue Recovery”.
+- Make the right page a full-bleed crisp HVAC story visual with bold white editorial typography on the left side, such as “Every missed call costs a job.”, and a small yellow pill button at the bottom.
 
-## 4. Enabled chat interface
+## UI overlay and page turning
 
-- Make the Elena / AI receptionist interface visible from the main experience and expandable from the header, floating dock, or CTA.
-- Preserve the existing secure `/api/concierge` intake flow, including validation, conversational side replies, same-origin protection, and graceful provider fallback.
-- Keep the chat responsive on mobile and desktop, show assistant/user messages, typing state, input state, and a clear completion state.
+- Use a minimal top-left white sans-serif “VERTEX” logo and a top-right white pill button labeled “Get in Touch”.
+- Clicking the right page, clicking the left page, or pressing Left/Right arrow keys must smoothly flip the 3D page mesh across the center spine with a subtle bend/curl animation.
+- Keep the existing concierge intake available behind “Get in Touch” without adding blur or changing the secure backend boundary.

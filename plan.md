@@ -1,29 +1,26 @@
-# VERTICE THERMAL — Lamplit HVAC field note
+# VERTEX — top-down HVAC flatlay
 
-## Product and design direction
+## Design direction
 
-The site is a cinematic, editorial field note for local HVAC owners. The design movement is **Lamplit technical noir**: a black lacquered oak desk, a matte black hardcover book, warm tungsten light, off-white paper, and restrained engineering annotations. It should feel like a premium direct-response story rather than a generic service landing page.
+The experience is **Lamplit Precision**: a fixed, top-down studio flatlay with a dark textured black-oak desk, a warm overhead pool of light, and a horizontal open book as the only focal object. The composition is deliberately crisp and physical: no vertical page, no blur, no backdrop-filter, and no frosted UI. The black desk absorbs the frame, the off-white left page carries the index, and the bright editorial right page turns a missed call into a measurable HVAC business problem.
 
-Core principles:
+The layout is a single viewport (`100vw × 100vh`) with `overflow: hidden`. The VERTEX wordmark sits at top-left in clean white sans-serif; a compact white “Get in Touch” pill sits at top-right; small mono metadata sits at the edges without competing with the book.
 
-- **Contrast earns attention:** pure black and dark slate create the room; off-white paper carries the argument; muted brass is reserved for signals and conversion.
-- **The book is the interface:** the front cover is the opening action; page turns are the navigation model; the narrative moves from missed call to recovered revenue.
-- **Evidence over decoration:** every page has a concrete visual case, timestamp, pipeline state, or metric.
-- **Quietly cinematic:** camera push-in, cursor lean, warm lamp pulse, page-curl shader, and small UI transitions should feel deliberate rather than flashy.
+The camera uses a Three.js PerspectiveCamera positioned high and steeply downward (`y=13, z=5`) toward the desk center. The book sits on a low black cover with two 16:10 page planes. The far-left framing props are a geometric succulent and angled dark wooden pencil. The far-right framing prop is a white ceramic cappuccino cup, latte surface, white saucer, and handle cropped by the viewport edge. A warm overhead spotlight creates a clean pool and soft cast shadows.
 
-Typography is Inter for all interface and narrative copy with DM Mono for field labels, timestamps, and system annotations. Signature motifs are the V monogram, warm status dots, folios, thin measurement rules, and the 24/7 pipeline indicator. Brand voice is direct, calm, and commercially specific: “The call you miss is already someone else’s booked job.” / “Show me where your after-hours revenue is leaking.”
+## Texture and interaction implementation
 
-## Experience and implementation
+`app/components/LamplitBook.tsx` owns the scene. Every page is drawn into a 2048×1280 HTML5 Canvas and converted to a `THREE.CanvasTexture`; each texture uses `texture.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy())`, sRGB color space, and linear filtering. The first spread is a clean off-white Contents page with a two-column four-chapter index and a full-bleed right story page. Later spreads reuse those crisp canvas story pages for the four HVAC chapters.
 
-- `app/page.tsx`: home route that mounts the client-side book experience.
-- `app/components/LamplitBook.tsx`: procedural Three.js desk, hardcover book, lamp, cup, pencil, cards, succulent, cursor lean, cover push-in, page navigation, page-curl shader, story visuals, and Elena chat dock.
-- `app/globals.css`: black/dark slate desk system, off-white book pages, responsive book spread, visual case studies, page-turn motion, and chat styling.
-- `app/api/concierge/route.ts` and `app/lib/intake.ts`: preserved secure HVAC intake backend used by the enabled chat interface.
-- `public/manus-routes.json`: homepage route declaration.
-- `app.config.ts`: durable project logo URL for the managed checkpoint.
+The page-turn model uses left and right page pivot groups anchored at the center spine. Clicking a rendered page is raycast against the actual 3D page meshes; the right page advances and the left page reverses. Left/Right arrow keys call the same turn queue. A hidden under-spread is populated before animation so the turn reveals the next spread instead of an empty desk. The pivot animates across the spine with a subtle segmented page bend from the subdivided plane, then swaps the high-resolution textures.
 
-The page model is cover plus four story pages: the 11:00 PM emergency, the competitor loss, the automated receptionist pipeline, and the recovered-revenue CTA. Navigation works with click halves, edge dragging, arrow keys, and a visible previous/next control. Elena’s floating chat starts collapsed, expands into a live intake dock, submits to `/api/concierge`, keeps answers client-side for the conversation, and preserves the existing backend’s validation and graceful fallback behavior.
+The top-right contact pill preserves the existing same-origin `/api/concierge` intake route in a crisp, non-blurred panel. It remains optional to the flatlay and does not introduce a second provider or expose secrets.
 
-## Service boundary
+## Project structure
 
-No new secret is required. The chat uses the existing same-origin concierge route and its existing environment-only provider configuration. The experience is fully usable when the optional model provider is unavailable because the route already supplies deterministic fallback replies.
+- `app/page.tsx` mounts `LamplitBook` as the only homepage experience.
+- `app/components/LamplitBook.tsx` contains the Three.js desk, physical props, canvas page renderer, raycast page hit detection, page-turn state, keyboard controls, and contact panel.
+- `app/globals.css` defines the fixed viewport, sharp studio chrome, contact panel, responsive safe area, and zero blur/backdrop-filter policy.
+- `app/api/concierge/route.ts` and `app/lib/intake.ts` remain the secure HVAC intake backend.
+- `public/manus-routes.json` remains synchronized to the single `/` route.
+- `app.config.ts` preserves the durable project logo metadata.
