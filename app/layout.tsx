@@ -2,17 +2,17 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Paper Worlds — A little flight. A world of wonder.',
-  description: 'Follow a folded paper plane on one continuous, painterly flight through a meadow, an enchanted forest, and a world above the clouds.',
-  applicationName: 'Paper Worlds',
+  title: 'The After-Hours Leak — VERTICE THERMAL',
+  description: 'An interactive HVAC field note about the calls local contractors miss after hours — and the 30-minute pipeline that recovers them.',
+  applicationName: 'VERTICE THERMAL',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://vertice-thermal.onrender.com'),
   alternates: { canonical: '/' },
   icons: { icon: '/favicon.svg' },
   openGraph: {
-    title: 'Paper Worlds — A little flight. A world of wonder.',
-    description: 'An interactive storybook journey in Three.js.',
+    title: 'The After-Hours Leak — VERTICE THERMAL',
+    description: 'A cinematic interactive book for local HVAC companies.',
     type: 'website',
-    siteName: 'Paper Worlds',
+    siteName: 'VERTICE THERMAL',
   },
   robots: { index: true, follow: true },
 };
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#c8e5e1',
+  themeColor: '#000000',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,5 +1,5 @@
-import PaperWorlds from './components/PaperWorlds';
+import LamplitBook from './components/LamplitBook';
 
 export default function Home() {
-  return <main className="paper-site"><PaperWorlds /></main>;
+  return <LamplitBook />;
 }
