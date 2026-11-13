@@ -17,8 +17,8 @@ export default function ThermalPeel({ sheetRef, trackRef }: Props) {
     try {
       renderer = new THREE.WebGLRenderer({ canvas: output, alpha: true, antialias: true, powerPreference: 'high-performance' });
     } catch { return; }
-    const mobile = matchMedia('(max-width: 720px)').matches;
-    renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.15 : 1.5));
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    renderer.setPixelRatio(pixelRatio);
     renderer.setClearColor(0, 0);
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 20);
@@ -98,7 +98,7 @@ export default function ThermalPeel({ sheetRef, trackRef }: Props) {
       try {
         const origin = sheet.getBoundingClientRect();
         width = origin.width; height = origin.height;
-        ratio = Math.min(1.25, 1600 / Math.max(1, width));
+        ratio = Math.min(pixelRatio, 2400 / Math.max(1, width));
         paint.width = lettering.width = Math.max(1, Math.round(width * ratio));
         paint.height = lettering.height = Math.max(1, Math.round(height * ratio));
         letters.clearRect(0, 0, lettering.width, lettering.height);

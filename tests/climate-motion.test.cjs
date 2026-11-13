@@ -30,6 +30,13 @@ test('the product study retains drag, airflow and mobile frame budgeting', () =>
   assert.doesNotMatch(source, /className="hotspot/);
 });
 
+test('scroll peel renders its captured sheet at device-aware resolution', () => {
+  const source = read('app/components/ThermalPeel.tsx');
+  assert.match(source, /const pixelRatio = Math\.min\(window\.devicePixelRatio \|\| 1, 2\)/);
+  assert.match(source, /renderer\.setPixelRatio\(pixelRatio\)/);
+  assert.match(source, /ratio = Math\.min\(pixelRatio, 2400 \/ Math\.max\(1, width\)\)/);
+});
+
 test('automatic reveal remains default with no visible pause controls added', () => {
   const source = read('app/components/VerticeLanding.tsx');
   assert.match(source, /\[autoFlip, setAutoFlip\] = useState\(true\)/);
