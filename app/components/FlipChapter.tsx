@@ -9,6 +9,7 @@ type FlipSlide = {
   title: string;
   description: string;
   image: string;
+  mobileImage?: string;
   details: string[];
 };
 
@@ -140,7 +141,10 @@ export default function FlipChapter({
           <div className="flip-chapter__stage" aria-label={`${title} service slides`}>
             <article key={`${id}-${current}`} className="flip-chapter__card" aria-label={`${activeSlide.title}, slide ${current + 1} of ${slideCount}`}>
               <div className="flip-chapter__image-wrap">
-                <img src={activeSlide.image} alt={activeSlide.title} className="flip-chapter__image" />
+                <picture className="flip-chapter__picture">
+                  {activeSlide.mobileImage && <source media="(max-width: 700px)" srcSet={activeSlide.mobileImage} />}
+                  <img src={activeSlide.image} alt={activeSlide.title} className="flip-chapter__image" loading="lazy" decoding="async" />
+                </picture>
                 <span className="flip-chapter__image-index">0{current + 1} / 0{slideCount}</span>
               </div>
               <div className="flip-chapter__card-copy">

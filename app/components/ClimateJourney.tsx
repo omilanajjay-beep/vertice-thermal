@@ -8,21 +8,21 @@ import './climate.css';
 
 const worlds = [
   {
-    name: 'Cooling', title: 'COOLING', image: '/climates/cooling.jpg', color: '#ccdddf',
+    name: 'Cooling', title: 'COOLING', image: '/climates/cooling-desktop.webp', mobileImage: '/climates/cooling-mobile.webp', color: '#ccdddf',
     eyebrow: 'A LITTLE ESCAPE FROM THE HEAT',
     description: 'The world outside can turn up the heat. Inside, find your own kind of cool.',
     facts: [['YOUR SYSTEM', 'Air conditioning'], ['THE FEELING', 'Cool & consistent'], ['OUR APPROACH', 'Sized for your home'], ['FIRST STEP', 'An on-site assessment']],
     icon: Snowflake,
   },
   {
-    name: 'Heating', title: 'HEATING', image: '/climates/spring.jpg', color: '#e6e9cf',
+    name: 'Heating', title: 'HEATING', image: '/climates/spring-desktop.webp', mobileImage: '/climates/spring-mobile.webp', color: '#e6e9cf',
     eyebrow: 'A WARMER WAY TO FEEL AT HOME',
     description: 'Soft sunlight. Balanced warmth. Quiet comfort that feels completely natural.',
     facts: [['YOUR SYSTEM', 'Heat-pump heating'], ['THE FEELING', 'Warm & welcoming'], ['OUR APPROACH', 'Property-led design'], ['FIRST STEP', 'A clear service plan']],
     icon: Flame,
   },
   {
-    name: 'Clean air', title: 'CLEAN AIR', image: '/climates/air.jpg', color: '#e5ece1',
+    name: 'Clean air', title: 'CLEAN AIR', image: '/climates/air-desktop.webp', mobileImage: '/climates/air-mobile.webp', color: '#e5ece1',
     eyebrow: 'MAKE ROOM FOR A FRESHER FEELING',
     description: 'A quieter moment. A fresher space. Airflow considered as carefully as everything else.',
     facts: [['YOUR SYSTEM', 'Indoor air quality'], ['THE FEELING', 'Fresh & balanced'], ['OUR APPROACH', 'Airflow & filtration'], ['FIRST STEP', 'A home evaluation']],
@@ -86,7 +86,7 @@ function CloudFlight({ active, color }: { active: boolean; color: string }) {
 
 export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { onRequestSurvey: () => void; chatOpen?: boolean }) {
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [introVisible, setIntroVisible] = useState(true);
   const [progress, setProgress] = useState(0);
   const [traveling, setTraveling] = useState(false);
   const [guide, setGuide] = useState(false);
@@ -114,31 +114,37 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
 
   useEffect(() => {
     firstAutoFlipAt.current = performance.now() + 8000;
-    worlds.forEach(({ image }) => { const photo = new Image(); photo.src = image; });
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setLoading(false); setProgress(100); return;
+      setIntroVisible(false);
+      setProgress(100);
+      return;
     }
     const start = performance.now();
     let frame = 0;
     const counter = (now: number) => {
       const elapsed = now - start;
-      setProgress(Math.min(100, Math.floor(elapsed / 30)));
-      if (elapsed < 3000) frame = requestAnimationFrame(counter);
-      else setLoading(false);
+      setProgress(Math.min(100, Math.floor((elapsed / 850) * 100)));
+      if (elapsed < 850) frame = requestAnimationFrame(counter);
     };
     frame = requestAnimationFrame(counter);
-    const timer = window.setTimeout(() => {
+    const introTimer = window.setTimeout(() => setIntroVisible(false), 1050);
+    const logoTimer = window.setTimeout(() => {
       const target = brand.current?.getBoundingClientRect();
       if (!target || !introBrand.current) return;
-      gsap.to(introBrand.current, { x: target.left + target.width / 2 - window.innerWidth / 2, y: target.top + target.height / 2 - window.innerHeight * .43, scale: .62, duration: .8, ease: 'power3.inOut' });
-    }, 2150);
-    return () => { cancelAnimationFrame(frame); clearTimeout(timer); gsap.killTweensOf(introBrand.current); };
+      gsap.to(introBrand.current, { x: target.left + target.width / 2 - window.innerWidth / 2, y: target.top + target.height / 2 - window.innerHeight * .43, scale: .62, duration: .65, ease: 'power3.inOut' });
+    }, 360);
+    const preloadTimer = window.setTimeout(() => {
+      const image = new Image();
+      const unseenClimate = worlds[2];
+      image.src = window.matchMedia('(max-width: 700px)').matches ? unseenClimate.mobileImage : unseenClimate.image;
+    }, 1300);
+    return () => { cancelAnimationFrame(frame); clearTimeout(introTimer); clearTimeout(logoTimer); clearTimeout(preloadTimer); gsap.killTweensOf(introBrand.current); };
   }, []);
 
   useEffect(() => () => { travelTimeline.current?.kill(); }, []);
 
   const go = useCallback((target: number) => {
-    if (target === current || loading || lock.current || guide || chatOpen) return;
+    if (target === current || lock.current || guide || chatOpen) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) { setCurrent(target); return; }
     const rect = portal.current?.getBoundingClientRect();
@@ -146,7 +152,7 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
     lock.current = true;
     setTraveling(true);
     setFlightColor(worlds[target].color);
-    flightImage.current.src = worlds[target].image;
+    flightImage.current.src = window.matchMedia('(max-width: 700px)').matches ? worlds[target].mobileImage : worlds[target].image;
     gsap.set(flight.current, { display: 'block', opacity: 1, x: rect.left, y: rect.top, width: rect.width, height: rect.height, borderRadius: '44%', visibility: 'visible' });
     gsap.set(flightImage.current, { scale: 1.12 });
     const tl = gsap.timeline({ onComplete: () => {
@@ -162,7 +168,7 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
       .to(flightImage.current, { scale: 1, duration: 1.1, ease: 'power3.out' }, 1.15)
       .to(flight.current, { opacity: 0, duration: .65 }, 1.6)
       .to(stage.current, { opacity: 1, y: 0, duration: .7, ease: 'power3.out' }, 1.6);
-  }, [current, guide, loading, chatOpen]);
+  }, [current, guide, chatOpen]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -177,10 +183,10 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
   }, []);
 
   const autoClockActive = !interacting && !reducedMotion && heroVisible && pageVisible && !traveling && !guide && !chatOpen;
-  const autoPlaying = autoClockActive && !loading;
+  const autoPlaying = autoClockActive;
   useEffect(() => {
     if (!autoPlaying) {
-      if (!loading) firstAutoFlipAt.current = null;
+      firstAutoFlipAt.current = null;
       return;
     }
     const delay = firstAutoFlipAt.current === null
@@ -191,7 +197,7 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
       go((current + 1) % worlds.length);
     }, delay);
     return () => window.clearTimeout(timer);
-  }, [autoPlaying, current, go, loading]);
+  }, [autoPlaying, current, go]);
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
@@ -221,9 +227,15 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
   }, [guide]);
 
   return <div className="climate-site">
-  <div ref={hero} id="climate-home" className={`climate-experience ${loading ? 'is-loading' : 'is-ready'} ${traveling ? 'is-traveling' : ''}`} aria-busy={loading || traveling}>
+  <div ref={hero} id="climate-home" className={`climate-experience is-ready ${traveling ? 'is-traveling' : ''}`} aria-busy={traveling}>
     <div className="climate-landscape" aria-hidden="true">
-      {worlds.map((item, index) => <img key={item.name} className={`climate-world ${index === current ? 'is-active' : ''}`} src={item.image} alt="" fetchPriority={index === 0 ? 'high' : 'auto'} />)}
+      {worlds.map((item, index) => {
+        const requested = index === current || index === next;
+        return <picture key={item.name} className={`climate-world ${index === current ? 'is-active' : ''}`}>
+          {requested && <source media="(max-width: 700px)" srcSet={item.mobileImage} />}
+          <img className="climate-world-image" src={requested ? item.image : undefined} alt="" loading={index === current ? 'eager' : 'lazy'} decoding="async" fetchPriority={index === current ? 'high' : 'low'} />
+        </picture>;
+      })}
       <div className="climate-shade" /><div className="climate-grain" />
     </div>
 
@@ -243,7 +255,7 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
 
       <div className="climate-portal-area">
         <span className="climate-portal-overline">THERE’S MORE TO FEEL</span>
-        <button ref={portal} className="climate-portal" aria-label={`Enter ${worlds[next].name.toLowerCase()} climate`} disabled={loading || traveling || guide}
+        <button ref={portal} className="climate-portal" aria-label={`Enter ${worlds[next].name.toLowerCase()} climate`} disabled={traveling || guide}
           onClick={() => go(next)}
           onPointerEnter={(event) => { if (event.pointerType === 'mouse') setInteracting(true); }}
           onFocus={() => setInteracting(true)} onBlur={() => setInteracting(false)}
@@ -257,7 +269,10 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
           }}
           onPointerLeave={() => { setInteracting(false); portalTilt.current?.style.setProperty('--portal-rx', '0deg'); portalTilt.current?.style.setProperty('--portal-ry', '0deg'); }}>
           <span ref={portalTilt} className="climate-portal-shell">
-            <img src={worlds[next].image} alt={`A preview of the ${worlds[next].name.toLowerCase()} climate`} />
+            <picture className="climate-portal-image">
+              <source media="(max-width: 700px)" srcSet={worlds[next].mobileImage} />
+              <img src={worlds[next].image} alt={`A preview of the ${worlds[next].name.toLowerCase()} climate`} loading="eager" decoding="async" fetchPriority="low" />
+            </picture>
             <span className="climate-portal-glass" />
             <span className="climate-portal-enter"><NextIcon size={23} strokeWidth={1.2} /><span>ENTER</span><ArrowUpRight size={17} /></span>
             <span className="climate-portal-name">{worlds[next].name}<small>NEXT CLIMATE / 0{next + 1}</small></span>
@@ -268,7 +283,7 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
 
       <nav className="climate-destinations" aria-label="Climate destinations">
         <span className="climate-nav-label">THE CLIMATES</span>
-        {worlds.map((item, index) => <button key={item.name} onClick={() => go(index)} aria-current={index === current ? 'page' : undefined} disabled={loading || traveling}><span>0{index + 1}</span><b>{item.name}</b><i /></button>)}
+        {worlds.map((item, index) => <button key={item.name} onClick={() => go(index)} aria-current={index === current ? 'page' : undefined} disabled={traveling}><span>0{index + 1}</span><b>{item.name}</b><i /></button>)}
       </nav>
 
       <div className="climate-facts" key={`${world.name}-facts`} aria-label={`${world.name} service facts`}>
@@ -279,7 +294,7 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
     <footer className="climate-footer">
       <span className="climate-footer-tag"><i /> ENGINEERED FOR YOUR EVERYDAY.</span>
       <button className="climate-scroll" onClick={() => document.getElementById('comfort-edit')?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' })}>SCROLL TO FEEL MORE <ArrowDown size={13} /></button>
-      <div className="climate-controls"><span>0{current + 1}<small> / 03</small></span><button onClick={() => go((current + 2) % 3)} disabled={traveling || loading} aria-label="Previous climate"><ArrowLeft size={17} /></button><button onClick={() => go(next)} disabled={traveling || loading} aria-label="Next climate"><ArrowRight size={17} /></button></div>
+      <div className="climate-controls"><span>0{current + 1}<small> / 03</small></span><button onClick={() => go((current + 2) % 3)} disabled={traveling} aria-label="Previous climate"><ArrowLeft size={17} /></button><button onClick={() => go(next)} disabled={traveling} aria-label="Next climate"><ArrowRight size={17} /></button></div>
     </footer>
 
     <div className="climate-autoflip" aria-label="Automatic climate rotation">
@@ -288,9 +303,9 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
     </div>
 
     <div ref={flight} className="climate-flight" aria-hidden="true"><img ref={flightImage} alt="" /></div>
-    <CloudFlight active={loading || traveling} color={flightColor} />
+    <CloudFlight active={introVisible || traveling} color={flightColor} />
 
-    {loading && <div className="climate-intro" role="status" aria-label="Preparing your climate experience">
+    {introVisible && <div className="climate-intro" role="status" aria-label="Entering the Prince HVAC climate experience">
       <div ref={introBrand} className="climate-intro-brand"><Brand /><span>COMFORT HAS NO BOUNDARIES.</span></div>
       <div className="climate-intro-bottom"><div className="climate-counter" aria-hidden="true">{String(progress).padStart(2, '0')}<small>%</small></div><span>ENTERING YOUR COMFORT ZONE<br /><b>PRINCE HVAC / CLIMATE 01</b></span></div>
       <div className="climate-load-track"><span style={{ width: `${progress}%` }} /></div>
@@ -308,14 +323,14 @@ export default function ClimateJourney({ onRequestSurvey, chatOpen = false }: { 
     </div>}
   </div>
   <FlipChapter id="comfort-edit" number="02" eyebrow="THE COMFORT EDIT" title="FEEL THE DIFFERENCE" intro="Not just a temperature. A better way to feel at home." blocked={chatOpen} onRequestSurvey={onRequestSurvey} slides={[
-    { label: 'COOL / 01', title: 'A cooler kind of calm.', description: 'Steady cooling, considered airflow and a system matched to the spaces you actually live in.', image: '/climates/cooling.jpg', details: ['Air conditioning', 'Room-by-room priorities', 'Property-led sizing'] },
-    { label: 'FRESH / 02', title: 'Room to breathe.', description: 'Bring the fresh-start feeling indoors with thoughtful ventilation, filtration and balanced airflow.', image: '/climates/spring.jpg', details: ['Indoor air quality', 'Airflow & filtration', 'A home evaluation'] },
-    { label: 'BALANCE / 03', title: 'Comfort, in balance.', description: 'Quiet warmth and responsive heat-pump systems, planned around your home rather than a one-size-fits-all answer.', image: '/climates/air.jpg', details: ['Heat-pump systems', 'Quiet operation', 'A considered service plan'] },
+    { label: 'COOL / 01', title: 'A cooler kind of calm.', description: 'Steady cooling, considered airflow and a system matched to the spaces you actually live in.', image: '/climates/cooling-desktop.webp', mobileImage: '/climates/cooling-mobile.webp', details: ['Air conditioning', 'Room-by-room priorities', 'Property-led sizing'] },
+    { label: 'FRESH / 02', title: 'Room to breathe.', description: 'Bring the fresh-start feeling indoors with thoughtful ventilation, filtration and balanced airflow.', image: '/climates/spring-desktop.webp', mobileImage: '/climates/spring-mobile.webp', details: ['Indoor air quality', 'Airflow & filtration', 'A home evaluation'] },
+    { label: 'BALANCE / 03', title: 'Comfort, in balance.', description: 'Quiet warmth and responsive heat-pump systems, planned around your home rather than a one-size-fits-all answer.', image: '/climates/air-desktop.webp', mobileImage: '/climates/air-mobile.webp', details: ['Heat-pump systems', 'Quiet operation', 'A considered service plan'] },
   ]} />
   <FlipChapter id="prince-care" number="03" eyebrow="THE PRINCE WAY" title="GOOD WORK. BETTER LIVING" intro="A clear journey from your first question to everyday comfort." blocked={chatOpen} onRequestSurvey={onRequestSurvey} slides={[
-    { label: 'LISTEN / 01', title: 'Your home. Your priorities.', description: 'Tell Elena what you’ve noticed. The conversation starts with your needs, not a sales pitch.', image: '/climates/spring.jpg', details: ['Tell us what’s happening', 'Share your comfort goals', 'Start with a conversation'] },
-    { label: 'ASSESS / 02', title: 'A plan that makes sense.', description: 'A proper site assessment considers existing equipment, access and airflow before the next step is recommended.', image: '/climates/cooling.jpg', details: ['Understand the property', 'Consider equipment & access', 'Discuss the right next step'] },
-    { label: 'CARE / 03', title: 'Keep the good feeling.', description: 'Clear communication and considered maintenance help keep your system understandable and your home comfortable.', image: '/climates/air.jpg', details: ['Service & maintenance', 'Clear follow-up', 'Long-view comfort'] },
+    { label: 'LISTEN / 01', title: 'Your home. Your priorities.', description: 'Tell Elena what you’ve noticed. The conversation starts with your needs, not a sales pitch.', image: '/climates/spring-desktop.webp', mobileImage: '/climates/spring-mobile.webp', details: ['Tell us what’s happening', 'Share your comfort goals', 'Start with a conversation'] },
+    { label: 'ASSESS / 02', title: 'A plan that makes sense.', description: 'A proper site assessment considers existing equipment, access and airflow before the next step is recommended.', image: '/climates/cooling-desktop.webp', mobileImage: '/climates/cooling-mobile.webp', details: ['Understand the property', 'Consider equipment & access', 'Discuss the right next step'] },
+    { label: 'CARE / 03', title: 'Keep the good feeling.', description: 'Clear communication and considered maintenance help keep your system understandable and your home comfortable.', image: '/climates/air-desktop.webp', mobileImage: '/climates/air-mobile.webp', details: ['Service & maintenance', 'Clear follow-up', 'Long-view comfort'] },
   ]} />
   <footer className="climate-site-footer"><Brand /><span>COMFORT HAS NO BOUNDARIES.</span><a href="#climate-home">BACK TO THE CLIMATES <ArrowUpRight size={14} /></a><small>Scenes are illustrative. Equipment and performance depend on a proper property assessment.</small></footer>
   </div>;
